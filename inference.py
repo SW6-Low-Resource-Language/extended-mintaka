@@ -37,19 +37,25 @@ pre_prompt = "Svar på det følgende spørgsmål:\n Spørgsmål: "
 post_prompt = "\nSvar: "
 
 prompts = [pre_prompt + entry['question'] + post_prompt
-        for entry in local_question_answer[0:100]]
+        for entry in local_question_answer]
 
 #pretrained_model = "meta-llama/Llama-3.2-1B-Instruct"
 pretrained_model = "meta-llama/Llama-3.3-70B-Instruct"
 
-llm = LLM(model=pretrained_model)
+llm = LLM(model=pretrained_model, 
+        tensor_parallel_size=8,
+        dtype="float16",
+        gpu_memory_utilization=1,
+        cpu_offload_gb=32,
+        enforce_eager=True)
 sampling_params = SamplingParams(
     max_tokens=50,
     temperature=0.7, 
     n=5 
 )
 
-# results = []
+# Generate responses for each prompt
+results = []
 
 
 outputs = llm.generate(prompts, sampling_params)
@@ -58,12 +64,12 @@ for output in outputs:
     for i in range(len(output.outputs)):
         print(f"{i}: Prompt: {output.prompt!r}, Generated text: {output.outputs[i].text!r}")
 
-# for prompt, output in zip(prompts, outputs):
-#     results.append({
-#         "prompt": prompt,
-#         "responses": outputs
-#     })
+#for prompt, output in zip(prompts, outputs):
+ #   results.append({
+  #      "prompt": prompt,
+   #     "responses": outputs
+   # })
 
-# output_file = "results_" + pretrained_model.replace("/", "_") + '_' + lang + '.json'
-# with open(output_file, 'w', encoding='utf-8') as file:
-#     json.dump(results, file, ensure_ascii=False, indent=4)
+#output_file = "results_" + pretrained_model.replace("/", "_") + '_' + lang + '.json'
+#with open(output_file, 'w', encoding='utf-8') as file:
+ #   json.dump(results, file, ensure_ascii=False, indent=4)
