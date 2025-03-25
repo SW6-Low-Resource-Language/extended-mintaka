@@ -33,51 +33,37 @@ for question in data:
     local_question_answer.append(qa_entity)
     
 
-prompts = [entry['question'] for entry in local_question_answer]
+pre_prompt = "Svar på det følgende spørgsmål:\n Spørgsmål: "
+post_prompt = "\nSvar: "
 
-# Prepare the local question-answer dataset
-local_question_answer = []
-for question in data:
-    qa_entity = {
-        "id": question['id'],
-        "question": question['translations'][lang],
-    }
-    answer = question['answer']
-    if answer['answerType'] in ["numerical", "boolean", "date", "string"]:
-        qa_entity['answer'] = answer['answer'][0]
-    elif answer['answer'] is None:
-        continue
-    elif answer['answer'][0]['label'][lang] is not None:
-        qa_entity['answer'] = answer['answer'][0]['label'][lang]
-    else:
-        continue
-    local_question_answer.append(qa_entity)
+prompts = [pre_prompt + entry['question'] + post_prompt
+        for entry in local_question_answer[0:100]]
 
-
-prompts = [entry['question'] for entry in local_question_answer]
-
-
-pretrained_model = "meta-llama/Llama-3.2-1B-Instruct"
+#pretrained_model = "meta-llama/Llama-3.2-1B-Instruct"
+pretrained_model = "meta-llama/Llama-3.3-70B-Instruct"
 
 llm = LLM(model=pretrained_model)
 sampling_params = SamplingParams(
     max_tokens=50,
     temperature=0.7, 
-    top_k=5, 
-    num_return_sequences=5  
+    n=5 
 )
 
-# Generate responses for each prompt
-results = []
+# results = []
 
 
 outputs = llm.generate(prompts, sampling_params)
-for prompt, output in zip(prompts, outputs):
-    results.append({
-        "prompt": prompt,
-        "responses": outputs
-    })
 
-output_file = "results_" + pretrained_model.replace("/", "_") + '_' + lang + '.json'
-with open(output_file, 'w', encoding='utf-8') as file:
-    json.dump(results, file, ensure_ascii=False, indent=4)
+for output in outputs:
+    for i in range(len(output.outputs)):
+        print(f"{i}: Prompt: {output.prompt!r}, Generated text: {output.outputs[i].text!r}")
+
+# for prompt, output in zip(prompts, outputs):
+#     results.append({
+#         "prompt": prompt,
+#         "responses": outputs
+#     })
+
+# output_file = "results_" + pretrained_model.replace("/", "_") + '_' + lang + '.json'
+# with open(output_file, 'w', encoding='utf-8') as file:
+#     json.dump(results, file, ensure_ascii=False, indent=4)

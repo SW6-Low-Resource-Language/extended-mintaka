@@ -77,7 +77,7 @@ for entry in local_question_answer:
 
     results.append(qa_result)
 
-# Save the results to a JSON file
+
 output_file = "results_" + pretrained_model.replace("/", "_") + '_' + lang + '.json'
 
 with open(output_file, 'w', encoding='utf-8') as f:
