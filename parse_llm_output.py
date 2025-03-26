@@ -58,6 +58,10 @@ for entry in data:
 
 print(data[:1])  # printer x antal første spørgsmål til tjekning.
 
+with open("output_dk_sprgsml_w_id.json", "w", encoding="utf-8") as json_file:
+    json.dump(data, json_file, ensure_ascii=False, indent=4)
+
+
 
 
 
