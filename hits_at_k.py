@@ -1,4 +1,5 @@
 import json
+import re
 
 #https://pykeen.readthedocs.io/en/stable/api/pykeen.metrics.ranking.HitsAtK.html#pykeen.metrics.ranking.HitsAtK
 
@@ -19,9 +20,9 @@ with open("./output_dk_sprgsml_w_id_and_true_answer.json", 'r', encoding='utf-8'
     answers = json.load(file)
 
 def pre_process_boolean(answer):
-    if true_answer == True:
+    if answer is True:
          return ["Sandt", "Rigtig", "Rigtigt", "Korrekt", "Ja"]
-    elif answer == False:    
+    elif answer is False:    
         return ["Falsk", "Forkert", "Nej"]
     elif answer == "After":
         return "Efter"
@@ -40,7 +41,7 @@ def pre_process_boolean(answer):
 hits_obj = {}
 for answer in answers:
     question, answers, id, true_answer = answer['question'], answer['answers'], answer['id'], answer['true_answer']
-    bool_answer = true_answer in [True, False]
+    bool_answer = true_answer is True or true_answer is False
     answer_strings = 1 
     true_answer = pre_process_boolean(true_answer)
     hits = []
@@ -55,7 +56,9 @@ for answer in answers:
         # if bool_answer:
         for i in range(answer_strings):
             t_answer = true_answer[i]
-            if str(t_answer).lower() in answer.lower(): 
+            # Use a regular expression to match the word with boundaries
+            pattern = rf'(?<!\w){re.escape(str(t_answer).lower())}(?!\w)'
+            if re.search(pattern, answer.lower()): 
                 hit = True
                 print("I'm hit!")
                 print(f"Hits@{index+1}: {question} - {answer} - {true_answer}")

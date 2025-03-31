@@ -11,6 +11,10 @@ lang = "da"
 # [{id: "blabla", question: "yaya", label: "xdd"}]
 
 
+# Sometimes in the file there is written Generated text: " instead of Generated text: ' which messes up with the parsing
+data = data.replace("Generated text: \"", "Generated text: '")
+
+
 pattern = re.compile(
     r"(?P<index>\d+):\s*Prompt:\s*'(?P<prompt>.*?)',\s*Generated text:\s*'(?P<gen_text>.*?)'",
     re.DOTALL
