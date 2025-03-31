@@ -24,6 +24,15 @@ for question in data_for_id:
             "id": question['id'],
             "question": question['translations'][lang],
         }
+    answer = question['answer']
+    if answer['answerType'] in ["numerical", "boolean", "date", "string"]:
+        qa_entity['true_answer'] = answer['answer'][0]
+    elif answer['answer'] == None:
+        continue
+    elif answer['answer'][0]['label'][lang] != None:
+        qa_entity['true_answer'] = answer['answer'][0]['label'][lang]
+    else:
+        continue
     local_question_with_id.append(qa_entity)
 
 
@@ -46,19 +55,22 @@ if matches:
 
 
 lookup = {qa["question"].strip(): qa["id"] for qa in local_question_with_id}
+lookup2 = {qa["question"].strip(): qa["true_answer"] for qa in local_question_with_id}
 
 
 for entry in data:
     q_text = entry["question"].strip()
     if q_text in lookup:
         entry["id"] = lookup[q_text]
+        entry["true_answer"] = lookup2[q_text]
     else:
         entry["id"] = None  
+        entry["true_answer"] = None
     
 
 print(data[:1])  # printer x antal første spørgsmål til tjekning.
 
-with open("output_dk_sprgsml_w_id.json", "w", encoding="utf-8") as json_file:
+with open("output_dk_sprgsml_w_id_and_true_answer.json", "w", encoding="utf-8") as json_file:
     json.dump(data, json_file, ensure_ascii=False, indent=4)
 
 
