@@ -55,8 +55,8 @@ def load_data(filename):
 
     print(f"{len(question_answer_pairs)} question-answer pairs loaded from {filename}")
     with open(filename.replace('.json', '_qa_pairs_' + lang + '.json'), 'w', encoding='utf-8') as f:
-        #  json.dump(question_answer_pairs, f, ensure_ascii=False, indent=4)
-        f.write("\n".join(question_answer_pairs))
+         json.dump({"data": question_answer_pairs}, f, ensure_ascii=False, indent=4)
+        # f.write("\n".join(question_answer_pairs))
 
 
 load_data(training_file)
@@ -65,7 +65,7 @@ load_data(validation_file)
 training_data_pairs = training_file.replace('.json', '_qa_pairs_' + lang + '.json')
 validation_data_pairs = validation_file.replace('.json', '_qa_pairs_' + lang + '.json')
 
-dataset = load_dataset("json", data_files={"train": training_data_pairs, "validation": validation_data_pairs})
+dataset = load_dataset("json", data_files={"train": training_data_pairs, "validation": validation_data_pairs}, field="data")
 
 
 
