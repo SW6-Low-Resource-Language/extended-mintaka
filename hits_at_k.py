@@ -56,10 +56,10 @@ def pre_process_boolean(answer):
         return answer
 
 
-def hits_at_k_string_match(answers_object):
+def hits_at_k_string_match(h_answers):
     hits_obj = {}
-    for answer in answers_object:
-        question, answers, id, true_answer = answers_object['question'], answers_object['answers'], answers_object['id'], answers_object['true_answer']
+    for answer in h_answers:
+        question, answers, id, true_answer = answer['question'], answer['answers'], answer['id'], answer['true_answer']
         bool_answer = true_answer is True or true_answer is False
         answer_strings = 1 
         true_answer = pre_process_boolean(true_answer)
@@ -81,13 +81,13 @@ def hits_at_k_string_match(answers_object):
                     # if(bool_answer):
                     #     bool_hits[t_answer] += 1
                     hit = True
-                    print("I'm hit!")
-                    print(f"Hits@{index+1}: {question} - {answer} - {true_answer}")
+                    # print("I'm hit!")
+                    # print(f"Hits@{index+1}: {question} - {answer} - {true_answer}")
                     if hits_at == None:
                         hits_at = index + 1
                     break
                 else:
-                    print(f"Missed me: {true_answer} - {answer}")
+                    # print(f"Missed me: {true_answer} - {answer}")
             hits.append({"idx": index+1, "hit": hit})
             
         hits_obj[id] = {}
@@ -97,7 +97,7 @@ def hits_at_k_string_match(answers_object):
         hits_obj[id]['hits_at'] = hits_at
         hits_obj[id]['answers'] = answers
 
-        return hits_obj
+    return hits_obj
 
 
 def count_hits(hits_object):
@@ -168,6 +168,7 @@ if __name__ == "__main__":
 
 
     hits_object = hits_at_k_string_match(answers)
+    print(hits_object)
 
     none_count, hits_1, hits_2, hits_3, hits_4, hits_5 = count_hits(hits_object)
 

@@ -3,7 +3,7 @@ import json
 
 lang = "da"  
 questions_label = "Spørgsmål" if lang == "da" else "প্রশ্ন"
-model_input_txt_path = "vllm_textgen_input_" + lang + ".json"
+model_input_txt_path = "vllm_textgen_output_" + lang + ".txt"
 # model_input_txt_path = "vllm_textgen_input_da.txt"
 dataset_input_json_path = "./data/mintaka_test_extended.json"
 
@@ -95,12 +95,12 @@ lang = lang):
             })
 
 
-    lookup = {qa["question"].strip(): qa["id"] for qa in local_question_with_id}
-    lookup2 = {qa["question"].strip(): qa["true_answer"] for qa in local_question_with_id}
+    lookup = {qa["question"].strip().replace("\\", ""): qa["id"] for qa in local_question_with_id}
+    lookup2 = {qa["question"].strip().replace("\\", ""): qa["true_answer"] for qa in local_question_with_id}
 
 
     for entry in data:
-        q_text = entry["question"].strip()
+        q_text = entry["question"].strip().replace("\\", "")
         if q_text in lookup:
             entry["id"] = lookup[q_text]
             entry["true_answer"] = lookup2[q_text]
