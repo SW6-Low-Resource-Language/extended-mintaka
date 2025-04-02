@@ -3,6 +3,11 @@ import json
 from openpyxl import Workbook
 import matplotlib.pyplot as plt
 from collections import Counter
+import plotly.graph_objects as go
+import os
+
+lang = 'da'
+test_type = 'zeroshot'
 
 def calculate_mean(array):
     """Calculate the mean of a list of numbers."""
@@ -21,10 +26,6 @@ def calculate_variance(array):
 def flatten(array_of_arrays):
     return [item for sublist in array_of_arrays for item in sublist]
 
-
-with open("hits_da.json", "r", encoding="utf-8") as f:
-    hits_data = json.load(f)
-
 def init_id_hit_map(hits_data):
     """Initialize a dictionary mapping IDs to their first hit."""
     id_hit_map = {}
@@ -33,197 +34,319 @@ def init_id_hit_map(hits_data):
             id_hit_map[id] = obj["hits"][0]["hit"]
     return id_hit_map
 
-id_hit_map = init_id_hit_map(hits_data)
+def init_id_variables_map(mintaka_data):
+        id_variables_map = {}
+        for entry in mintaka_data:
+            id = entry["id"]
+            complexity = entry["complexityType"]
+            category = entry["category"]
+            answerType = entry["answer"]["answerType"]
+            got_supporting_ents = "answer" in entry and "supportingEnt" in entry["answer"]
+            id_variables_map[id] = {
+                "complexity": complexity,
+                "category": category,
+                "answerType": answerType,
+                "got_supporting_ents": got_supporting_ents
+            }
+        return id_variables_map
 
-with open('sem_test2.json', 'r', encoding="utf-8") as f:
-    sem_data = json.load(f)
+def run_semantic_similarity_analysis(lang = lang, test_type = test_type):
+    with open("hits_da.json", "r", encoding="utf-8") as f:
+        hits_data = json.load(f)
 
-with open('./data/mintaka_test_extended.json', 'r', encoding="utf-8") as f:
-    mintaka_data = json.load(f)
+    with open(f'sem_similarity_{lang}.json', 'r', encoding="utf-8") as f:
+        sem_data = json.load(f)
 
-id_variables_map = {}
-for entry in mintaka_data:
-    id = entry["id"]
-    complexity = entry["complexityType"]
-    category = entry["category"]
-    answerType = entry["answer"]["answerType"]
-    got_supporting_ents = "answer" in entry and "supportingEnt" in entry["answer"]
-    id_variables_map[id] = {
-        "complexity": complexity,
-        "category": category,
-        "answerType": answerType,
-        "got_supporting_ents": got_supporting_ents
-    }
+    with open('./data/mintaka_test_extended.json', 'r', encoding="utf-8") as f:
+        mintaka_data = json.load(f)
 
-sem_scores_obj = {
-    "complexity": {},
-    "category": {},
-    "answerType": {},
-    "got_supporting_ents": {}
-}
+    id_hit_map = init_id_hit_map(hits_data)
+    
+    id_variables_map = init_id_variables_map(mintaka_data)
 
-worst_performers = []
-best_performers = []
+    def calculate_data():
+        sem_scores_obj = {
+            "complexity": {},
+            "category": {},
+            "answerType": {},
+            "got_supporting_ents": {}
+        }
+        worst_performers = []
+        best_performers = []
 
-def check_add_to_worst_performers(entry):
-    """Add an entry to the worst performers list."""
-    if len(worst_performers) < 10:
-        worst_performers.append(entry)
-    else:
-        worst_performers.sort(key=lambda x: x["mean"])
-        if entry["mean"] < worst_performers[-1]["mean"]:
-            worst_performers[-1] = entry
+        def check_add_to_worst_performers(entry):
+            """Add an entry to the worst performers list."""
+            if len(worst_performers) < 10:
+                worst_performers.append(entry)
+            else:
+                worst_performers.sort(key=lambda x: x["mean"])
+                if entry["mean"] < worst_performers[-1]["mean"]:
+                    worst_performers[-1] = entry
 
-def check_add_to_best_performers(entry):
-    """Add an entry to the best performers list."""
-    if len(best_performers) < 10:
-        best_performers.append(entry)
-    else:
-        best_performers.sort(key=lambda x: x["mean"], reverse=True)
-        if entry["mean"] > best_performers[-1]["mean"]:
-            best_performers[-1] = entry
+        def check_add_to_best_performers(entry):
+            """Add an entry to the best performers list."""
+            if len(best_performers) < 10:
+                best_performers.append(entry)
+            else:
+                best_performers.sort(key=lambda x: x["mean"], reverse=True)
+                if entry["mean"] > best_performers[-1]["mean"]:
+                    best_performers[-1] = entry
 
-hits_sem_scores = {
-    "hit" : [],
-    "not_hit": []
-}
+        hits_sem_scores = {
+            "hit" : [],
+            "not_hit": []
+        }
+
+        # Process each entry in sem_data 
+        for entry in sem_data:
+            sem_scores = entry["sem_scores"]
+            id = entry["id"]
+            variables = id_variables_map[id]
+            entry_mean = calculate_mean(sem_scores)
+            hit_1 = id_hit_map[id]
+            if hit_1 is True:
+                hits_sem_scores["hit"].append(entry_mean)
+            else:
+                hits_sem_scores["not_hit"].append(entry_mean)
+            full_entry = {**entry, **variables, "mean": entry_mean, "hit_1": hit_1}
+            check_add_to_best_performers(full_entry)
+            check_add_to_worst_performers(full_entry)
+
+            for key, value in variables.items():
+                if value not in sem_scores_obj[key]:
+                    sem_scores_obj[key][value] = []
+                sem_scores_obj[key][value].append(sem_scores)
+        return sem_scores_obj, best_performers, worst_performers, hits_sem_scores
+
+    def create_semscore_analysis_workbook(sem_scores_obj, best_performers, worst_performers, hits_sem_scores):
+
+        def create_mean_variance_by_key_sheet(wb, sem_scores_obj):
+            """Create a sheet with mean and variance by key."""
+            # Create a new sheet
+            ws = wb.active
+            ws.title = "SemScores Analysis"
+
+            # Write headers to the Excel sheet
+            ws.append(["Key", "Value", "Mean", "Variance"])
+
+            # Process sem_scores_obj
+            for key, value_dict in sem_scores_obj.items():
+                for value, sem_scores_list in value_dict.items():
+
+                    # Flatten the sem_scores list
+                    flattened_scores = flatten(sem_scores_list)
+                    # Compute mean and variance
+                    mean = calculate_mean(flattened_scores)
+                    variance = calculate_variance(flattened_scores)
+                    # Write to Excel
+                    ws.append([key, value, mean, variance])
+
+        
+
+        def write_performers_to_sheet(wb, sheet_title, performers):
+            """Write performer data to an Excel sheet."""
+            wb.create_sheet(title=sheet_title)
+            ws = wb[sheet_title]
+
+            # Dynamically write headers based on keys of the first entry in performers
+            if performers:
+                headers = []
+                for key in performers[0].keys():
+                    if isinstance(performers[0][key], list):
+                        # Expand array values into separate columns
+                        headers.extend([f"{key}_{i}" for i in range(len(performers[0][key]))])
+                    else:
+                        headers.append(key)
+                ws.append(headers)
+
+            # Write data rows for performers
+            for performer in performers:
+                row = []
+                for key in performer.keys():
+                    if isinstance(performer[key], list):
+                        # Expand array values into separate columns
+                        row.extend([str(item) for item in performer[key]])
+                    else:
+                        row.append(str(performer[key]))
+                ws.append(row)
+        def create_hits_semscore_sheet(wb, sheet_title, hits_sem_scores):
+            """Write Hits Sem Scores to an Excel sheet."""
+            wb.create_sheet(title=sheet_title)
+            ws = wb[sheet_title]
+            ws.append(["Hit_1/Not Hit_1", "Mean semscore", "Variance"])
+            for key, sem_scores in hits_sem_scores.items():
+                mean = calculate_mean(sem_scores)
+                variance = calculate_variance(sem_scores)
+                ws.append([key, mean, variance])
+
+        """Create an Excel workbook with sem scores analysis."""
+        # Create a new workbook
+        wb = Workbook()
+        # Create a sheet for mean and variance by key
+        create_mean_variance_by_key_sheet(wb, sem_scores_obj)
+        # Write Best Performers to Excel
+        write_performers_to_sheet(wb, "Best Performers", best_performers)
+        # Write Worst Performers to Excel
+        write_performers_to_sheet(wb, "Worst Performers", worst_performers)
+        # Write Hits Sem Scores to Excel
+        create_hits_semscore_sheet(wb, "Hits_1 Semscores", hits_sem_scores)
+        # Save the workbook
+        wb.save(f"sem_scores_analysis_{test_type}_{lang}.xlsx")
+
+    def create_plots(lang = lang, test_type = test_type):
+        def group_scores_by_label(data): 
+            # Group scores by labels
+            grouped_scores = {}
+            for score, label in data:
+                if label not in grouped_scores:
+                    grouped_scores[label] = []
+                grouped_scores[label].append(round(score, 2))  # Round scores to 2 decimals
+            return grouped_scores   
 
 
-all_sem_scores = []
+        def get_sem_scores_of_variable_type(variable_type, sem_data = sem_data, id_variables_map = id_variables_map):
+            all_sem_scores = []
+            for entry in sem_data:
+                sem_scores = entry["sem_scores"]
+                id = entry["id"]
+                variables = id_variables_map[id]
+                entry_mean = calculate_mean(sem_scores)
+                variable = variables[variable_type]
+                all_sem_scores.append((entry_mean, variable))
+            return all_sem_scores
 
-for entry in sem_data:
-    sem_scores = entry["sem_scores"]
+        def ensure_directory_exists(path):
+            """Ensure that the directory exists, creating it if necessary."""
+            os.makedirs(path, exist_ok=True)
 
-    id = entry["id"]
-    variables = id_variables_map[id]
-    entry_mean = calculate_mean(sem_scores)
-    all_sem_scores.append(entry_mean)
-    hit_1 = id_hit_map[id]
-    if hit_1 is True:
-        hits_sem_scores["hit"].append(entry_mean)
-    else:
-        hits_sem_scores["not_hit"].append(entry_mean)
-    full_entry = {**entry, **variables, "mean": entry_mean, "hit_1": hit_1}
-    check_add_to_best_performers(full_entry)
-    check_add_to_worst_performers(full_entry)
+        def create_sem_score_stacked_bar_chart(data, title):
+            grouped_scores = group_scores_by_label(data)    
+            # Count frequencies for each label
 
-    for key, value in variables.items():
-        if value not in sem_scores_obj[key]:
-            sem_scores_obj[key][value] = []
-        sem_scores_obj[key][value].append(sem_scores)
+            # Define a set of distinct colors for better contrast
+            distinct_colors = [
+                "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+                "#ffff00", "#e377c2", "#66ffff"
+            ]
+
+            labels = list(grouped_scores.keys())
+            # Prepare data for a stacked bar chart
+            x_values = sorted(set(score for scores in grouped_scores.values() for score in scores))
+            stacked_data = {label: [grouped_scores[label].count(x) for x in x_values] for label in labels}
+
+            # Plot the stacked bar chart
+            plt.figure(figsize=(12, 8))
+            bottom_values = [0] * len(x_values)  # Initialize the bottom of the stack
+
+            for i, label in enumerate(labels):
+                plt.bar(
+                    x_values, stacked_data[label], width=0.01,
+                    color=distinct_colors[i % len(distinct_colors)],  # Use distinct colors
+                    alpha=0.7, label=label, bottom=bottom_values
+                )
+                # Update the bottom values for the next stack
+                bottom_values = [bottom + current for bottom, current in zip(bottom_values, stacked_data[label])]
+
+            plt.xlabel("Sem Score (rounded to 2 decimals)")
+            plt.ylabel("Frequency")
+            plt.title(f"{title} (Stacked)")
+            plt.legend(title="Categories")
+            plt.grid(axis='y', linestyle='--', alpha=0.7)
+            plt.tight_layout()
+
+            # Ensure the directory exists
+            output_dir = f"./sem_score_plots/{test_type}/{lang}/"
+            ensure_directory_exists(output_dir)
+
+            # Save the plot as an image
+            filename = title.replace(" ", "_").lower() + "_stacked" ".png"
+            plt.savefig(os.path.join(output_dir, filename))
+            print(f"Saved stacked bar chart as {filename}")
+            # plt.show()
+
+        def create_sem_score_interactive_plot(data, title):
+            grouped_scores = group_scores_by_label(data)
+            x_values = sorted(set(score for scores in grouped_scores.values() for score in scores))
+            traces = []
+            labels = list(grouped_scores.keys())
+
+            for label in labels:
+                trace = go.Bar(
+                    x=x_values,
+                    y=[grouped_scores[label].count(x) for x in x_values],
+                    name=label
+                )
+                traces.append(trace)
+
+            # Create the figure with dropdown menu
+            fig = go.Figure()
+
+            # Add traces for each category
+            for trace in traces:
+                fig.add_trace(trace)
+
+            # Update layout with dropdown menu
+            fig.update_layout(
+                updatemenus=[
+                    {
+                        "buttons": [
+                            {
+                                "label": "All Categories",
+                                "method": "update",
+                                "args": [{"visible": [True] * len(labels)}, {"title": "All Categories"}],
+                            }
+                        ]
+                        + [
+                            {
+                                "label": label,
+                                "method": "update",
+                                "args": [
+                                    {"visible": [i == j for i in range(len(labels))]},
+                                    {"title": f"Category: {label}"},
+                                ],
+                            }
+                            for j, label in enumerate(labels)
+                        ],
+                        "direction": "down",
+                        "showactive": True,
+                    }
+                ],
+                title="Distribution of Sem Scores by Category (Interactive)",
+                xaxis_title="Sem Score (rounded to 2 decimals)",
+                yaxis_title="Frequency",
+            )
+
+            # Ensure the directory exists
+            output_dir = f"./sem_score_plots/{test_type}/{lang}/"
+            ensure_directory_exists(output_dir)
+
+            # Save the interactive plot as an HTML file
+            filename = title.replace(" ", "_").lower() + "_interactive" + ".html"
+            fig.write_html(os.path.join(output_dir, filename))
+            print(f"Saved interactive plot as {filename}")
+
+            # Show the interactive plot
+            # fig.show()
+
+        variables_to_graph = ["complexity", "category", "answerType", "got_supporting_ents"]
+        for variable in variables_to_graph:
+            sem_scores = get_sem_scores_of_variable_type(variable)
+            title = f"Distribution of Sem Scores by {variable}"
+            # Create the stacked bar chart
+            create_sem_score_stacked_bar_chart(sem_scores, title)
+            # Create the interactive plot
+            create_sem_score_interactive_plot(sem_scores, title)
+    # running the different parts of the analysis
+    sem_scores_obj, best_performers, worst_performers, hits_sem_scores = calculate_data()
+    create_semscore_analysis_workbook(sem_scores_obj, best_performers, worst_performers, hits_sem_scores)
+    create_plots() # Creates stacked bar charts and interactive plots for the sem scores
+
+run_semantic_similarity_analysis()
 
 
 
 
-# Create a new workbook and sheet
-wb = Workbook()
-ws = wb.active
-ws.title = "SemScores Analysis"
-
-# Write headers to the Excel sheet
-ws.append(["Key", "Value", "Mean", "Variance"])
-
-# Distribution graph, 
 
 
-# Process sem_scores_obj
-for key, value_dict in sem_scores_obj.items():
-    for value, sem_scores_list in value_dict.items():
 
-        # Flatten the sem_scores list
-        flattened_scores = flatten(sem_scores_list)
-        # Compute mean and variance
-        mean = calculate_mean(flattened_scores)
-        variance = calculate_variance(flattened_scores)
-        # Write to Excel
-        ws.append([key, value, mean, variance])
 
-# Create a new sheet for Best Performers
-wb.create_sheet(title="Best Performers")
-ws = wb["Best Performers"]
-
-# Dynamically write headers based on keys of the first entry in best_performers
-if best_performers:
-    headers = []
-    for key in best_performers[0].keys():
-        if isinstance(best_performers[0][key], list):
-            # Expand array values into separate columns
-            headers.extend([f"{key}_{i}" for i in range(len(best_performers[0][key]))])
-        else:
-            headers.append(key)
-    ws.append(headers)
-
-# Write data rows for Best Performers
-for performer in best_performers:
-    row = []
-    for key in performer.keys():
-        if isinstance(performer[key], list):
-            # Expand array values into separate columns
-            row.extend([str(item) for item in performer[key]])
-        else:
-            row.append(str(performer[key]))
-    ws.append(row)
-
-# Create a new sheet for Worst Performers
-wb.create_sheet(title="Worst Performers")
-ws = wb["Worst Performers"]
-
-# Dynamically write headers based on keys of the first entry in worst_performers
-if worst_performers:
-    headers = []
-    for key in worst_performers[0].keys():
-        if isinstance(worst_performers[0][key], list):
-            # Expand array values into separate columns
-            headers.extend([f"{key}_{i}" for i in range(len(worst_performers[0][key]))])
-        else:
-            headers.append(key)
-    ws.append(headers)
-
-# Write data rows for Worst Performers
-for performer in worst_performers:
-    row = []
-    for key in performer.keys():
-        if isinstance(performer[key], list):
-            # Expand array values into separate columns
-            row.extend([str(item) for item in performer[key]])
-        else:
-            row.append(str(performer[key]))
-    ws.append(row)
-
-# Create a new sheet for Hits Sem Scores
-wb.create_sheet(title="Hits_1 Sem Scores")
-ws = wb["Hits_1 Sem Scores"]
-# Write headers for Hits Sem Scores
-ws.append(["Hit_1/Not Hit_1", "Mean semscore", "Variance"])
-# Write data for Hits Sem Scores
-for key, sem_scores in hits_sem_scores.items():
-    mean = calculate_mean(sem_scores)
-    variance = calculate_variance(sem_scores)
-    ws.append([key, mean, variance])
-
-# Save the workbook
-# wb.save("sem_scores_analysis.xlsx")
-
-# Flatten all sem_scores and round to two decimals
-all_sem_scores = flatten([flatten(scores) for scores in sem_scores_obj.values()])
-rounded_scores = [round(score, 2) for score in all_sem_scores]
-
-# Count frequencies of each rounded score
-score_counts = Counter(rounded_scores)
-
-# Sort scores for plotting
-sorted_scores = sorted(score_counts.items())
-x_values, y_values = zip(*sorted_scores)
-
-# Plot the distribution graph
-plt.figure(figsize=(10, 6))
-plt.bar(x_values, y_values, width=0.01, color='blue', alpha=0.7)
-plt.xlabel("Sem Score (rounded to 2 decimals)")
-plt.ylabel("Frequency")
-plt.title("Distribution of Sem Scores")
-plt.grid(axis='y', linestyle='--', alpha=0.7)
-plt.tight_layout()
-
-# Save the plot as an image or display it
-plt.savefig("sem_score_distribution.png")
-plt.show()
