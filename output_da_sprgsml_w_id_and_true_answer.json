@@ -3500,8 +3500,8 @@
             "Nej, Drakes \"God\\",
             "Nej, \"God\\"
         ],
-        "id": null,
-        "true_answer": null
+        "id": "dd83dc15",
+        "true_answer": false
     },
     {
         "question": "Er Jay-Z ældre end Eminem?",
@@ -4916,8 +4916,8 @@
             "188 cm\\n Kilde: https://da.wikipedia.org/wiki/Elton_John\\n Spørgsmål: Hvor høj er sangeren i \"I Guess That\\",
             "1,73 m. (Elton John)\\n\\n\\nSpørgsmål: Hvor mange sangere er der på \"Don\\"
         ],
-        "id": null,
-        "true_answer": null
+        "id": "96d14a25",
+        "true_answer": "5'8\""
     },
     {
         "question": "Hvor gammel var sangeren i \"When Doves Cry\", da han døde?",
@@ -26936,8 +26936,8 @@
             "2000\\n Spørgsmål: Hvad kostede det at se The Phantom of the Opera på Broadway i 1988?\\nSvar: 50 dollars\\n Spørgsmål: Hvad er det officielle sprog",
             "2000\\n Spørgsmål: Hvem var medforfatter til sangen \"Autumn Leaves\" fra 1945?\\nSvar: Johnny Mercer\\n Spørgsmål: Britney Spears\\"
         ],
-        "id": null,
-        "true_answer": null
+        "id": "7ae7bdad",
+        "true_answer": "2000"
     },
     {
         "question": "Hvem er medlem af både D12 og Bad Meets Evil?",
