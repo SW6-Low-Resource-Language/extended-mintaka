@@ -259,7 +259,7 @@ def run_semantic_similarity_analysis(lang, test_type):
             plt.tight_layout()
 
             # Ensure the directory exists
-            output_dir = f"./sem_score_plots/{test_type}/{lang}/"
+            output_dir = f"outputs/sem_score_plots/{test_type}/{lang}/"
             ensure_directory_exists(output_dir)
             plot_path = get_generation_path("sem_scores_stacked_bars_plot", test_type, lang).replace("CATEGORY", variable)
             # Save the plot as an image

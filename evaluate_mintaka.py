@@ -20,7 +20,7 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
         None
     """
     # Step 1: Parse LLM output
-    dataset_input_json_path = get_generation_path("test_data_extended")
+    """ dataset_input_json_path = get_generation_path("test_data_extended")
     questions_label = questions_label_dict['question'][lang]
     answers_label = questions_label_dict['answer'][lang]
     model_input_txt_path = get_generation_path("model_answers", mode, lang)
@@ -55,21 +55,10 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
         true_label=max_hit_true_label, 
         false_label=max_hit_false_label,
         output_json_path=sem_score_output_path
-    ) 
+    )  """
     run_semantic_similarity_analysis(lang, mode)
 
-    """  # Step 2: Perform semantic similarity analysis
-        perform_semantic_similarity(
-            lang=lang,
-            dataset_input_json_path=dataset_input_json_path,
-            model_answer_json_path=output_json_path,
-            true_label=comparative_dict[lang]['true_list'][0],
-            false_label=comparative_dict[lang]['false_list'][0],
-            output_json_path=f"sem_scores_{lang}.json"
-        )
-
-        # Step 3: Run semantic similarity analysis
-        run_semantic_similarity_analysis(lang, dataset_input_json_path, output_json_path) """
+    
 
 
 
