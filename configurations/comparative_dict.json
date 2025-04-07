@@ -1,0 +1,20 @@
+{
+    "da": {
+        "true_list": ["Sandt", "Rigtig", "Rigtigt", "Korrekt", "Ja"],
+        "false_list": ["Falsk", "Forkert", "Nej"],
+        "after": "Efter",
+        "before": "Før",
+        "same": "Samme",
+        "less": "Mindre",
+        "both": "Begge"
+    },
+    "bn": {
+        "true_list": ["সত্য", "সঠিক", "হ্যাঁ"],
+        "false_list": ["মিথ্যা", "ভুল", "না"],
+        "after": "পরে",
+        "before": "আগে",
+        "same": "একই",
+        "less": "কম",
+        "both": "উভয়"
+    }
+}
