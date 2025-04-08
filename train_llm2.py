@@ -8,17 +8,27 @@ import json
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_scheduler
 from datasets import load_dataset
 
+from dotenv import load_dotenv
+
+# import torch
+print(torch.cuda.is_available())  # Should return True
+print(torch.cuda.device_count())  # Should return the number of GPUs
+
+
 print("Finished importing modules")
 
 torch.cuda.empty_cache()
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-os.environ["HUGGING_FACE_HUB_TOKEN"] = os.getenv("HF_TOKEN")
+# os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+# os.environ["HUGGING_FACE_HUB_TOKEN"] = os.getenv("HF_TOKEN")
+# load_dotenv()
+# os.environ = os.getenv("hugging_face")
+
 
 lang='da'
 
 
-pre_trained_model = "distilgpt2"
+pre_trained_model = "distilbert/distilgpt2"
 #pre_trained_model = "meta-llama/Llama-3.2-1B-Instruct"
 # pre_trained_model = "meta-llama/Llama-3.3-70B-Instruct"
 
@@ -135,6 +145,8 @@ def preprocess_data(data_file):
         batch_questions.append(datapoint['question'])
         batch_answers.append(datapoint['answer'])
 
+    batch_questions = batch_questions[:100]
+    batch_answers = batch_questions[:100]
 
     encoded_inputs = tokenizer(batch_questions, batch_answers, padding=True, truncation=True, return_tensors="pt")
 
@@ -192,7 +204,7 @@ model, optimizer, training_loader, test_loader = accelerator.prepare(
 
 print(f"Beginning training from epoch {start_epoch}")
 for epoch in range(start_epoch, num_epochs):
-    print("start of training loop")
+    print(f"start of training loop {epoch}")
     model.train()
     for batch_idx, (input_ids, attention_mask) in enumerate(training_loader):
         
