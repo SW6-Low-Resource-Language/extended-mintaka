@@ -4,22 +4,36 @@ import torch.optim as optim
 # import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from accelerate import Accelerator
-
-torch.cuda.empty_cache()
-
 import json
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_scheduler
 from datasets import load_dataset
 
+print("Finished importing modules")
+
+torch.cuda.empty_cache()
+
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["HUGGING_FACE_HUB_TOKEN"] = os.getenv("HF_TOKEN")
 
 lang='da'
 
-pre_trained_model = "meta-llama/Llama-3.2-1B-Instruct"
+
+pre_trained_model = "distilgpt2"
+#pre_trained_model = "meta-llama/Llama-3.2-1B-Instruct"
 # pre_trained_model = "meta-llama/Llama-3.3-70B-Instruct"
 
 for i in range(torch.cuda.device_count()):
-    torch.cuda.set_per_process_memory_fraction(0.95, device=1)
+    torch.cuda.set_per_process_memory_fraction(0.95, device=i)
+    allocated_memory = torch.cuda.memory_allocated(i) / (1024 ** 2)  # Convert to MB
+    reserved_memory = torch.cuda.memory_reserved(i) / (1024 ** 2)  # Convert to MB
+    print(f"GPU {i}: Allocated Memory: {allocated_memory:.2f} MB, Reserved Memory: {reserved_memory:.2f} MB")
+
+
+#for i in range(torch.cuda.device_count()):
+ #   torch.cuda.set_per_process_memory_fraction(0.95, device=i)
+  #  gpu_mem = torch.cuda.get_device_properties(i).total_memory
+   # print(f"GPU {i} memory: {gpu_mem}")
+
 
 tokenizer = AutoTokenizer.from_pretrained(pre_trained_model)
 model = AutoModelForCausalLM.from_pretrained(pre_trained_model)
@@ -133,8 +147,8 @@ training_dataset = TensorDataset(encoded_training_inputs["input_ids"], encoded_t
 validation_dataset = TensorDataset(encoded_test_inputs["input_ids"], encoded_test_inputs["attention_mask"])
 
 
-training_loader = DataLoader(training_dataset, batch_size=16, shuffle=True)
-test_loader = DataLoader(validation_dataset, batch_size=16, shuffle=False)
+training_loader = DataLoader(training_dataset, batch_size=8, shuffle=True)
+test_loader = DataLoader(validation_dataset, batch_size=8, shuffle=False)
 
 checkpoint_dir = 'checkpoints'
 os.makedirs(checkpoint_dir, exist_ok=True)
@@ -175,12 +189,19 @@ model, optimizer, training_loader, test_loader = accelerator.prepare(
     model, optimizer, training_loader, test_loader
 )
 
+
+print(f"Beginning training from epoch {start_epoch}")
 for epoch in range(start_epoch, num_epochs):
+    print("start of training loop")
     model.train()
     for batch_idx, (input_ids, attention_mask) in enumerate(training_loader):
+        
+        print("for batch")
         outputs = model(input_ids, attention_mask=attention_mask, labels=input_ids)
         loss = outputs.loss
         accelerator.backward(loss)
+
+        print("take a step")
         optimizer.step()
         optimizer.zero_grad()
 
@@ -190,9 +211,9 @@ for epoch in range(start_epoch, num_epochs):
     model.eval()  # Set the model to evaluation mode
     val_loss = 0
     with torch.no_grad():  # Disable gradient computation for validation
-        for batch_idx, (data, target) in enumerate(test_loader):
-            output = model(data)
-            loss = loss_fn(output, target)
+        for batch_idx, (input_ids, attention_mask) in enumerate(test_loader):
+            output = model(input_ids, attention_mask=attention_mask, labels=input_ids)
+            loss = outputs.loss
             val_loss += loss.item()
 
     val_loss /= len(test_loader)  # Average validation loss
