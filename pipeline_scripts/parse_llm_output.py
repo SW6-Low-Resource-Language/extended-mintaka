@@ -81,6 +81,7 @@ lang):
         for i in range(len(data)):
             data[i]["true_answer"] = valid_entities[i]["true_answer"]
             data[i]["id"] = valid_entities[i]["id"]
+            data[i]["answerType"] = valid_entities[i]["answerType"]
     else:
         print("NO")
         raise Exception("The number of valid entities does not match the number of parsed answers.")

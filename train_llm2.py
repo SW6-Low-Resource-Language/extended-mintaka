@@ -15,6 +15,7 @@ print(torch.cuda.is_available())  # Should return True
 print(torch.cuda.device_count())  # Should return the number of GPUs
 
 
+
 print("Finished importing modules")
 
 torch.cuda.empty_cache()
@@ -28,7 +29,7 @@ torch.cuda.empty_cache()
 lang='da'
 
 
-pre_trained_model = "distilbert/distilgpt2"
+pre_trained_model = "openai-community/gpt2"
 #pre_trained_model = "meta-llama/Llama-3.2-1B-Instruct"
 # pre_trained_model = "meta-llama/Llama-3.3-70B-Instruct"
 
@@ -204,6 +205,10 @@ model, optimizer, training_loader, test_loader = accelerator.prepare(
 
 print(f"Beginning training from epoch {start_epoch}")
 for epoch in range(start_epoch, num_epochs):
+        # Check dedicated VRAM usage (actual GPU memory)
+    allocated = torch.cuda.memory_allocated(0) / 1024**3  # GB
+    reserved = torch.cuda.memory_reserved(0) / 1024**3    # GB
+    print(f"Dedicated VRAM: Allocated = {allocated:.2f} GB, Reserved = {reserved:.2f} GB")
     print(f"start of training loop {epoch}")
     model.train()
     for batch_idx, (input_ids, attention_mask) in enumerate(training_loader):

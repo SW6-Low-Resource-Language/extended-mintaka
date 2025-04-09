@@ -1,5 +1,6 @@
 import json
 from pipeline_scripts.parse_llm_output import parse_llm_output
+from pipeline_scripts.pre_process_data import pre_process_data
 from pipeline_scripts.hits_at_k import hits_at_k_string_match  
 from pipeline_scripts.hits_stats import calc_hits_at_ks
 from pipeline_scripts.semantic_similarity import perform_semantic_similarity
@@ -20,7 +21,7 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
         None
     """
     # Step 1: Parse LLM output
-    """ dataset_input_json_path = get_generation_path("test_data_extended")
+    dataset_input_json_path = get_generation_path("test_data_extended")
     questions_label = questions_label_dict['question'][lang]
     answers_label = questions_label_dict['answer'][lang]
     model_input_txt_path = get_generation_path("model_answers", mode, lang)
@@ -34,29 +35,34 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
         lang
     )
 
-    # Step 2: Make hits at k comparissons 
-    hits_output_path = get_generation_path("hit_annotation_json", mode, lang)
-    hits_obj, bool_hits = hits_at_k_string_match(parsed_answers, comparative_dict, lang, hits_output_path)
-    print(f"Bool hits: {bool_hits}") 
-    calc_hits_at_ks(hits_obj,5) 
+    # Step 2: Process the parsed answers (normalize numerical and temporal answers)
+    pre_process_data(parsed_answers)  # This function is assumed to be defined in pre_process_data.py
 
-    true_hits = bool_hits["True"]  
-    false_hits = bool_hits["False"]
 
-    max_hit_true_label = max(true_hits, key=true_hits.get)
-    max_hit_false_label = max(false_hits, key=false_hits.get)
 
-    # Step 3 : Calculate semantic similarity scores
-    sem_score_output_path = get_generation_path("sem_scores_json", mode, lang)
-    perform_semantic_similarity(
-        lang=lang, 
-        dataset_input_json_path=dataset_input_json_path, 
-        model_answer_json_path=parsed_answer_path, 
-        true_label=max_hit_true_label, 
-        false_label=max_hit_false_label,
-        output_json_path=sem_score_output_path
-    )  """
-    run_semantic_similarity_analysis(lang, mode)
+    """  # Step 2: Make hits at k comparissons 
+        hits_output_path = get_generation_path("hit_annotation_json", mode, lang)
+        hits_obj, bool_hits = hits_at_k_string_match(parsed_answers, comparative_dict, lang, hits_output_path)
+        print(f"Bool hits: {bool_hits}") 
+        calc_hits_at_ks(hits_obj,5) 
+
+        true_hits = bool_hits["True"]  
+        false_hits = bool_hits["False"]
+
+        max_hit_true_label = max(true_hits, key=true_hits.get)
+        max_hit_false_label = max(false_hits, key=false_hits.get)
+    """
+    """  # Step 3 : Calculate semantic similarity scores
+        sem_score_output_path = get_generation_path("sem_scores_json", mode, lang)
+        perform_semantic_similarity(
+            lang=lang, 
+            dataset_input_json_path=dataset_input_json_path, 
+            model_answer_json_path=parsed_answer_path, 
+            true_label=max_hit_true_label, 
+            false_label=max_hit_false_label,
+            output_json_path=sem_score_output_path
+        ) 
+        run_semantic_similarity_analysis(lang, mode) """
 
     
 
@@ -70,7 +76,7 @@ if __name__ == "__main__":
     with open('./configurations/questions_label_lang_dict.json', 'r', encoding='utf-8') as file:
         questions_label_dict = json.load(file)
 
-    lang = "da"  
+    lang = "bn"  
     mode = "zeroshot"
 
     run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict)
