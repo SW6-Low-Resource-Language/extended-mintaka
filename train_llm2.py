@@ -3,33 +3,26 @@ import torch
 import torch.optim as optim
 # import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
-from accelerate import Accelerator
+# from accelerate import Accelerator
 import json
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_scheduler
 from datasets import load_dataset
+from deepspeed import initialize
 
-from dotenv import load_dotenv
-
-# import torch
-print(torch.cuda.is_available())  # Should return True
-print(torch.cuda.device_count())  # Should return the number of GPUs
 
 
 print("Finished importing modules")
 
 torch.cuda.empty_cache()
 
-# os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-# os.environ["HUGGING_FACE_HUB_TOKEN"] = os.getenv("HF_TOKEN")
-# load_dotenv()
-# os.environ = os.getenv("hugging_face")
-
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+os.environ["HUGGING_FACE_HUB_TOKEN"] = os.getenv("HF_TOKEN")
+os.environ["PYTORCH_NO_CUDA_MEMORY_CACHING"] = "1"
 
 lang='da'
 
-
-pre_trained_model = "distilbert/distilgpt2"
-#pre_trained_model = "meta-llama/Llama-3.2-1B-Instruct"
+# pre_trained_model = "distilbert/distilgpt2"
+pre_trained_model = "meta-llama/Llama-3.2-1B-Instruct"
 # pre_trained_model = "meta-llama/Llama-3.3-70B-Instruct"
 
 for i in range(torch.cuda.device_count()):
@@ -47,6 +40,7 @@ for i in range(torch.cuda.device_count()):
 
 tokenizer = AutoTokenizer.from_pretrained(pre_trained_model)
 model = AutoModelForCausalLM.from_pretrained(pre_trained_model)
+model.gradient_checkpointing_enable()
 
 if tokenizer.pad_token is None:
     tokenizer.add_special_tokens({'pad_token': '[PAD]'})
@@ -60,6 +54,8 @@ num_epochs = 5
 
 validation_file = "./data/mintaka_test_extended.json"
 training_file = "./data/mintaka_dev_extended.json"
+# training_file = "./data/mintaka_train_extended.json"
+
 
 
 
@@ -120,7 +116,7 @@ load_data(validation_file)
 training_data_pairs = training_file.replace('.json', '_qa_pairs_' + lang + '.json')
 validation_data_pairs = validation_file.replace('.json', '_qa_pairs_' + lang + '.json')
 
-dataset = load_dataset("json", data_files={"train": training_data_pairs, "validation": validation_data_pairs}, field="data")
+# dataset = load_dataset("json", data_files={"train": training_data_pairs, "validation": validation_data_pairs}, field="data")
 
 
 
@@ -145,10 +141,8 @@ def preprocess_data(data_file):
         batch_questions.append(datapoint['question'])
         batch_answers.append(datapoint['answer'])
 
-    batch_questions = batch_questions[:100]
-    batch_answers = batch_questions[:100]
 
-    encoded_inputs = tokenizer(batch_questions, batch_answers, padding=True, truncation=True, return_tensors="pt")
+    encoded_inputs = tokenizer(batch_questions, batch_answers, padding=True, truncation=True, return_tensors="pt", max_length=64)
 
     return encoded_inputs
 
@@ -159,26 +153,31 @@ training_dataset = TensorDataset(encoded_training_inputs["input_ids"], encoded_t
 validation_dataset = TensorDataset(encoded_test_inputs["input_ids"], encoded_test_inputs["attention_mask"])
 
 
-training_loader = DataLoader(training_dataset, batch_size=8, shuffle=True)
-test_loader = DataLoader(validation_dataset, batch_size=8, shuffle=False)
+training_loader = DataLoader(training_dataset, batch_size=1, shuffle=True)
+test_loader = DataLoader(validation_dataset, batch_size=1, shuffle=False)
 
-checkpoint_dir = 'checkpoints'
-os.makedirs(checkpoint_dir, exist_ok=True)
+
 
 num_training_steps = num_epochs * len(training_loader)
 
-# train_dataloader, eval_dataloader, model, optimizer = accelerator.prepare(
-#     train_dataloader, eval_dataloader, model, optimizer
-# )
-
-if os.listdir(checkpoint_dir):
-    latest_checkpoint = max([int(file.split('.')[0]) for file in os.listdir(checkpoint_dir)])
-    checkpoint = torch.load(os.path.join(checkpoint_dir, f'{latest_checkpoint}.pt'))
-    model.load_state_dict(checkpoint['model_state_dict'])
-    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    start_epoch = latest_checkpoint + 1
-else:
-    start_epoch = 0
+model_engine, optimizer, _, _ = initialize(
+    model=model,
+    optimizer=optimizer,
+    config_params={
+        "train_micro_batch_size_per_gpu": 1,
+        "gradient_accumulation_steps": 1,
+        "zero_optimization": {
+            "stage": 3,
+            "offload_optimizer": {
+                "device": "cpu",
+                "pin_memory": True
+            }
+        },
+        "fp16": {
+            "enabled": True
+        }
+    }
+)
 
 lr_scheduler = get_scheduler(
     "linear",
@@ -188,56 +187,77 @@ lr_scheduler = get_scheduler(
 )
 
 
+
+# train_dataloader, eval_dataloader, model, optimizer = accelerator.prepare(
+#     train_dataloader, eval_dataloader, model, optimizer
+# )
+
+checkpoint_dir = 'checkpoints'
+os.makedirs(checkpoint_dir, exist_ok=True)
+if os.listdir(checkpoint_dir):
+    latest_checkpoint = max([int(file.split('.')[0]) for file in os.listdir(checkpoint_dir)])
+    # checkpoint = torch.load(os.path.join(checkpoint_dir, f'{latest_checkpoint}.pt'))
+    # model.load_state_dict(checkpoint['model_state_dict'])
+    # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    model_engine.load_checkpoint(checkpoint_dir, tag=f'{latest_checkpoint}')
+    start_epoch = latest_checkpoint + 1
+else:
+    start_epoch = 0
+
+
+
+
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # model.to(device)
 
-accelerator = Accelerator(
-    mixed_precision="fp16",
-    cpu=False,
-    gradient_accumulation_steps=1
-)
+# accelerator = Accelerator(
+#     mixed_precision="fp16",
+#     cpu=False,
+#     gradient_accumulation_steps=1
+# )
 
-model, optimizer, training_loader, test_loader = accelerator.prepare(
-    model, optimizer, training_loader, test_loader
-)
+# model, optimizer, training_loader, test_loader = accelerator.prepare(
+#     model, optimizer, training_loader, test_loader
+# )
+
+
+
 
 
 print(f"Beginning training from epoch {start_epoch}")
 for epoch in range(start_epoch, num_epochs):
     print(f"start of training loop {epoch}")
-    model.train()
+    model_engine.train()
     for batch_idx, (input_ids, attention_mask) in enumerate(training_loader):
-        
-        print("for batch")
-        outputs = model(input_ids, attention_mask=attention_mask, labels=input_ids)
+        outputs = model_engine(input_ids, attention_mask=attention_mask, labels=input_ids)
         loss = outputs.loss
-        accelerator.backward(loss)
-
-        print("take a step")
-        optimizer.step()
+        model_engine.backward(loss)
+        model_engine.step()
+        lr_scheduler.step()
         optimizer.zero_grad()
 
     print(f'Epoch {epoch}: Loss {loss.item()}')
 
     # Validation loop
-    model.eval()  # Set the model to evaluation mode
+    model_engine.eval()  # Set the model to evaluation mode
     val_loss = 0
     with torch.no_grad():  # Disable gradient computation for validation
         for batch_idx, (input_ids, attention_mask) in enumerate(test_loader):
-            output = model(input_ids, attention_mask=attention_mask, labels=input_ids)
-            loss = outputs.loss
+            output = model_engine(input_ids, attention_mask=attention_mask, labels=input_ids)
+            loss = output.loss
             val_loss += loss.item()
 
     val_loss /= len(test_loader)  # Average validation loss
     print(f'Epoch {epoch}: Validation Loss {val_loss}')
 
     # Save checkpoint every epoch
-    accelerator.save({
-        'epoch': epoch,
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
-        'loss': loss
-    }, os.path.join(checkpoint_dir, f'{epoch}.pt'))
+    model_engine.save_checkpoint(checkpoint_dir, tag=f'{epoch}')
+    # accelerator.save({
+    #     'epoch': epoch,
+    #     'model_state_dict': model.state_dict(),
+    #     'optimizer_state_dict': optimizer.state_dict(),
+    #     'loss': loss
+    # }, os.path.join(checkpoint_dir, f'{epoch}.pt'))
 
 
 
