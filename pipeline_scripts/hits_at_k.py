@@ -62,22 +62,39 @@ def hits_at_k_string_match(h_answers, bool_comparative_dict, lang, output_path):
         else:
             true_answer = [true_answer]
         hits_at = None
+        # Use a regular expression to match the word with boundaries
+        
         for index, answer in enumerate(answers):
             hit = False
-            # if bool_answer:
-            for i in range(answer_strings):
-                t_answer = true_answer[i]
-                # Use a regular expression to match the word with boundaries
-                pattern = rf'(?<!\w){re.escape(str(t_answer).lower())}(?!\w)'
-                if re.search(pattern, answer.lower()): 
-                    if(bool_string is not None):
-                        bool_hits[bool_string][t_answer] += 1
+            # processed answers of type "numerical" and "temporal" might have annotation on standardized format of answer derived from LLM answer (eg "Four" in an answer would lead to "4" in annotation)
+            if isinstance(answer, dict) and "annotations" in answer:
+                # print(answer["number_annotations"])
+                annotations = answer["annotations"]
+                answer_string = answer["answer"]
+                pattern = rf'(?<!\w){re.escape(str(true_answer[0]).lower())}(?!\w)'
+                if any(annot == true_answer[0] for annot in annotations):
                     hit = True
-                    # print("I'm hit!")
-                    # print(f"Hits@{index+1}: {question} - {answer} - {true_answer}")
                     if hits_at == None:
                         hits_at = index + 1
-                    break
+                elif re.search(pattern, answer_string.lower()):
+                    hit = True
+                    if hits_at == None:
+                        hits_at = index + 1
+                # print(answer)
+            else:
+                # if bool_answer:
+                for i in range(answer_strings):
+                    t_answer = true_answer[i]
+                    pattern = rf'(?<!\w){re.escape(str(t_answer).lower())}(?!\w)'
+                    if re.search(pattern, answer.lower()): 
+                        if(bool_string is not None):
+                            bool_hits[bool_string][t_answer] += 1
+                        hit = True
+                        # print("I'm hit!")
+                        # print(f"Hits@{index+1}: {question} - {answer} - {true_answer}")
+                        if hits_at == None:
+                            hits_at = index + 1
+                        break
             hits.append({"idx": index+1, "hit": hit})
             
         hits_obj[id] = {}

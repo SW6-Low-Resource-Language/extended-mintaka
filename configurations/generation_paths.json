@@ -30,6 +30,10 @@
     "test_data_extended": {
         "path": "data/mintaka_test_extended.json",
         "description": "Path to json file containing test data with extended language"
+    },
+    "processed_test_data": {
+        "path": "outputs/processed_output_jsons/processed_test_data_MODE_LANG.json",
+        "description": "Path to json file containing processed test data"
     }
     
 }
