@@ -50,17 +50,17 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
     max_hit_true_label = max(true_hits, key=true_hits.get)
     max_hit_false_label = max(false_hits, key=false_hits.get)
 
-    """  # Step 3 : Calculate semantic similarity scores
-        sem_score_output_path = get_generation_path("sem_scores_json", mode, lang)
-        perform_semantic_similarity(
-            lang=lang, 
-            dataset_input_json_path=dataset_input_json_path, 
-            model_answer_json_path=parsed_answer_path, 
-            true_label=max_hit_true_label, 
-            false_label=max_hit_false_label,
-            output_json_path=sem_score_output_path
-        ) 
-        run_semantic_similarity_analysis(lang, mode) """
+    #Step 3 : Calculate semantic similarity scores
+    sem_score_output_path = get_generation_path("sem_scores_json", mode, lang)
+    perform_semantic_similarity(
+        lang=lang, 
+        dataset_input_json_path=dataset_input_json_path, 
+        model_answer_json_path=parsed_answer_path, 
+        true_label=max_hit_true_label, 
+        false_label=max_hit_false_label,
+        output_json_path=sem_score_output_path
+    ) 
+    run_semantic_similarity_analysis(lang, mode) 
 
     
 
