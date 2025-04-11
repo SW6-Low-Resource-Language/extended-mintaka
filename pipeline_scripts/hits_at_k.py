@@ -34,68 +34,63 @@ def pre_process_boolean(answer, bool_comparative_dict, lang):
     else:
         return answer
 
+def match_pattern(answer, true_answer):
+    """Check if the true answer matches the answer string using regex."""
+    pattern = rf'(?<!\w){re.escape(str(true_answer).lower())}(?!\w)'
+    return re.search(pattern, answer.lower())
+
+def check_annotations(answer, true_answer):
+    """Check if the true answer exists in the annotations."""
+    annotations = answer.get("annotations", [])
+    return any(annot == true_answer for annot in annotations)
+
+def process_answer(index, answer, true_answer, bool_hits, bool_string, hits_at):
+    """Process a single answer and check for hits."""
+    hit = False
+    if isinstance(answer, dict) and "annotations" in answer:
+        # Check annotations and answer string
+        if check_annotations(answer, true_answer) or match_pattern(answer["answer"], true_answer):
+            hit = True
+            if hits_at is None:
+                hits_at = index + 1
+    else:
+        # Check plain string answers
+        if match_pattern(answer, true_answer):
+            hit = True
+            if bool_string is not None:
+                bool_hits[bool_string][true_answer] += 1
+            if hits_at is None:
+                hits_at = index + 1
+    return hit, hits_at
+
 
 def hits_at_k_string_match(h_answers, bool_comparative_dict, lang, output_path):
     hits_obj = {}
-
     true_list = bool_comparative_dict[lang]['true_list']
     false_list = bool_comparative_dict[lang]['false_list']
-    bool_hits_true = {i : 0 for i in true_list}
-    bool_hits_false = {i : 0 for i in false_list}
-    bool_hits = {"True" : bool_hits_true, "False" : bool_hits_false}
+    bool_hits = {"True": {i: 0 for i in true_list}, "False": {i: 0 for i in false_list}}
 
     for answer in h_answers:
         question, answers, id, true_answer = answer['question'], answer['answers'], answer['id'], answer['true_answer']
-        bool_answer = true_answer is True or true_answer is False
-        bool_string = None
-        if true_answer is True:
-            bool_string = "True"
-        elif true_answer is False:
-            bool_string = "False"
+        bool_answer = isinstance(true_answer, bool)
+        bool_string = "True" if true_answer is True else "False" if true_answer is False else None
 
-        answer_strings = 1 
-        true_answer = pre_process_boolean(true_answer, bool_comparative_dict, lang)
+        # Preprocess true_answer
+        true_answer_list = pre_process_boolean(true_answer, bool_comparative_dict, lang)
+        if not isinstance(true_answer_list, list):
+            true_answer_list = [true_answer_list]
+
         hits = []
-        # pre_process_boolean return lists of potential strings if boolean answer
-        if (bool_answer):
-            answer_strings = len(true_answer)
-        else:
-            true_answer = [true_answer]
         hits_at = None
-        # Use a regular expression to match the word with boundaries
-        
+
+        # Process each answer
         for index, answer in enumerate(answers):
-            hit = False
-            # processed answers of type "numerical" and "temporal" might have annotation on standardized format of answer derived from LLM answer (eg "Four" in an answer would lead to "4" in annotation)
-            if isinstance(answer, dict) and "annotations" in answer:
-                # print(answer["number_annotations"])
-                annotations = answer["annotations"]
-                answer_string = answer["answer"]
-                pattern = rf'(?<!\w){re.escape(str(true_answer[0]).lower())}(?!\w)'
-                if any(annot == true_answer[0] for annot in annotations):
-                    hit = True
-                    if hits_at == None:
-                        hits_at = index + 1
-                elif re.search(pattern, answer_string.lower()):
-                    hit = True
-                    if hits_at == None:
-                        hits_at = index + 1
-                # print(answer)
-            else:
-                # if bool_answer:
-                for i in range(answer_strings):
-                    t_answer = true_answer[i]
-                    pattern = rf'(?<!\w){re.escape(str(t_answer).lower())}(?!\w)'
-                    if re.search(pattern, answer.lower()): 
-                        if(bool_string is not None):
-                            bool_hits[bool_string][t_answer] += 1
-                        hit = True
-                        # print("I'm hit!")
-                        # print(f"Hits@{index+1}: {question} - {answer} - {true_answer}")
-                        if hits_at == None:
-                            hits_at = index + 1
-                        break
-            hits.append({"idx": index+1, "hit": hit})
+            for t_answer in true_answer_list:
+                hit, hits_at = process_answer(index, answer, t_answer, bool_hits, bool_string, hits_at)
+                if hit:
+                    break  # Stop checking other true answers if a hit is found
+            hits.append({"idx": index + 1, "hit": hit})
+
             
         hits_obj[id] = {}
         hits_obj[id]['question'] = question
