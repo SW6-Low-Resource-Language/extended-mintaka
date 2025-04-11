@@ -32,8 +32,8 @@ pre_trained_model = "google/mt5-xl"
 training_file = "./data/mintaka_train_extended.json"
 validation_file = "./data/mintaka_test_extended.json"
 
-train_micro_batch_size_per_gpu = 16
-gradient_accumulation_steps = 4
+train_micro_batch_size_per_gpu = 8
+gradient_accumulation_steps = 8
 
 num_epochs = 100
 learning_rate = 3e-5
@@ -118,8 +118,8 @@ def load_data(filename):
          json.dump({"data": question_answer_pairs}, f, ensure_ascii=False, indent=4)
 
 
-load_data(training_file)
-load_data(validation_file)
+#load_data(training_file)
+#load_data(validation_file)
 
 training_data_pairs = training_file.replace('.json', '_qa_pairs_' + lang + '.json')
 validation_data_pairs = validation_file.replace('.json', '_qa_pairs_' + lang + '.json')
@@ -163,7 +163,7 @@ encoded_test_inputs = preprocess_data(validation_data_pairs)
 training_dataset = TensorDataset(encoded_training_inputs["input_ids"], encoded_training_inputs["attention_mask"])
 validation_dataset = TensorDataset(encoded_test_inputs["input_ids"], encoded_test_inputs["attention_mask"])
 
-training_loader = DataLoader(training_dataset, batch_size=1, shuffle=True, num_workers=6)
+training_loader = DataLoader(training_dataset, batch_size=train_micro_batch_size_per_gpu, shuffle=True, num_workers=6)
 test_loader = DataLoader(validation_dataset, batch_size=16, shuffle=False, num_workers=6)
 
 
@@ -187,14 +187,15 @@ model_engine, optimizer, _, lr_scheduler = initialize(
             "pin_memory": True
         },
         "fp16": {
-            "enabled": True
+            "enabled": True,
+            "initial_scale_power": 16
         },
          "scheduler": {
             "type": "WarmupLR",  # Use DeepSpeed's WarmupLR scheduler
             "params": {
                 "warmup_min_lr": 0,  # Minimum learning rate during warmup
                 "warmup_max_lr": learning_rate,  # Target learning rate after warmup
-                "warmup_num_steps": int(0.1 * num_training_steps)  # 10% warmup steps
+                "warmup_num_steps": int(0.05 * num_training_steps)  # 10% warmup steps
             }
         }
     }
@@ -218,13 +219,17 @@ for epoch in range(start_epoch, num_epochs):
     if rank == 0:
         print(f"Time elapsed: {time.time() - start} seconds")
     model_engine.train()
+    print(f"[Rank {rank}] Model_engine set to training mode")
     for batch_idx, (input_ids, attention_mask) in enumerate(training_loader):
+        print(f"[Rank {rank}] Epoch {epoch}, Batch {batch_idx}")
+
         input_ids = input_ids.to(model_engine.device)
         attention_mask = attention_mask.to(model_engine.device)
 
         outputs = model_engine(input_ids, attention_mask=attention_mask, labels=input_ids)
         loss = outputs.loss
         model_engine.backward(loss)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         model_engine.step()
         optimizer.zero_grad()
 
@@ -242,6 +247,7 @@ for epoch in range(start_epoch, num_epochs):
             output = model_engine(input_ids, attention_mask=attention_mask, labels=input_ids)
             loss = output.loss
             val_loss += loss.item()
+        val_loss /=len(test_loader)
 
     if rank == 0:
         print(f'Epoch {epoch}: Validation Loss {val_loss}')
