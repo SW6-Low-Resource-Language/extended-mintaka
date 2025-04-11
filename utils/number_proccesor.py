@@ -15,5 +15,21 @@ def replace_entire_word_if_digit(text):
     
     return re.sub(r'\w*\p{Nd}\w*', extract_and_convert, text)
 
-converted = replace_entire_word_if_digit(text)
-print(converted)
+def is_same_answer(answer, mod_answer):
+    """
+    Check if the answer and mod_answer are "same" based on specific conditions.
+
+    Args:
+        answer (str): The original answer string.
+        mod_answer (str): The modified answer string.
+
+    Returns:
+        bool: True if the answer and mod_answer are "same", False otherwise.
+    """
+    ans_split = answer.split(" ")
+    mod_split = mod_answer.split(" ")
+
+    for i in range(len(ans_split)):
+        if ans_split[i] != mod_split[i] and "%" not in ans_split[i] and "\\u" not in ans_split[i]:
+            return False
+    return True
