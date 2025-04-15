@@ -34,7 +34,7 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
         answers_label,
         lang
     )
-    processed_answers = pre_process_data(parsed_answers, lang)  # This function is assumed to be defined in pre_process_data.py
+    processed_answers = pre_process_data(parsed_answers,mode, lang)  # This function is assumed to be defined in pre_process_data.py
     processed_data_path = get_generation_path("processed_test_data", mode, lang)
     with open(processed_data_path, 'w', encoding='utf-8') as file:
         json.dump(processed_answers, file, ensure_ascii=False, indent=4)

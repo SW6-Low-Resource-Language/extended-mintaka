@@ -1,21 +1,21 @@
 {
-    "model_answers" : {
+    "model_answers": {
         "path": "outputs/LLM_outputs/vllm_MODE_output_LANG.txt",
         "description": "Path to raw txt file containing model generation"
     },
-    "parsed_answers_json" : {
+    "parsed_answers_json": {
         "path": "outputs/parsed_LLM_output_jsons/output_MODE_questions_w_id_and_true_answer_LANG.json",
         "description": "Path to parsed json file containing parsed model answers"
     },
-    "hit_annotation_json" : {
+    "hit_annotation_json": {
         "path": "outputs/hits_jsons/hits_MODE_LANG.json",
         "description": "Path to json file containing HITs with annotations (which answers that the true answer could be found in)"
     },
-    "sem_scores_json" : {
+    "sem_scores_json": {
         "path": "outputs/sem_score_jsons/sem_scores_MODE_LANG.json",
         "description": "Path to json file containing semantic similarity scores annotation for the model answers / true answers"
     },
-    "sem_scores_analysis_sheet" : {
+    "sem_scores_analysis_sheet": {
         "path": "outputs/sem_score_sheets/sem_scores_analysis_MODE_LANG.xlsx",
         "description": "Path to xlsx file containing mean and virance and other statistics on the similarity scores across different cateogories"
     },
@@ -34,6 +34,8 @@
     "processed_test_data": {
         "path": "outputs/processed_output_jsons/processed_test_data_MODE_LANG.json",
         "description": "Path to json file containing processed test data"
+    },
+    "processesing_numerical_translations": {
+        "path": "outputs/LANG/MODE/translated_num_answers.txt"
     }
-    
 }

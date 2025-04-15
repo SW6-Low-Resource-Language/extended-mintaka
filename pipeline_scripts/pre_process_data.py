@@ -2,9 +2,10 @@ from utils.number_proccesor import replace_entire_word_if_digit, is_same_answer
 from utils.google_translation import google_translate_line_by_line
 from text_to_num import text2num
 from dateparser.search import search_dates
+from utils.get_generation_path import get_generation_path
 import json
 import copy
-def pre_process_data(parsed_llm, lang): 
+def pre_process_data(parsed_llm, mode, lang): 
     """
     Pre-processes parsed LLM data by handling numerical and temporal (date) answers.
 
@@ -61,21 +62,16 @@ def pre_process_data(parsed_llm, lang):
 
         print(f"Total changes made: {changes} / {655 * 5}")
         print(f"Total entries affected: {entries_modified}")
-            
-                    
-        """ with open('translation_indexes.json', 'w', encoding='utf-8') as f:
-            json.dump(numerical_text_answers_indexes, f, ensure_ascii=False, indent=4)
-        
-        with open('answers_for_translation.txt', 'w', encoding='utf-8') as f:
-            for answer in answers_for_translation:
-                f.write(answer + "\n") """
 
+
+
+        translation_output_path = get_generation_path("processesing_numerical_translations", mode, lang)
         """ # Uncomment this to actually use the translation service
         translated_answers = google_translate_line_by_line(answers_for_translation, "translated_num_answers_da.txt", target_language="en-US", source_language=lang) """
 
 
         # Read the translated answers from a file
-        with open('translated_num_answers_da', 'r', encoding='utf-8') as f:
+        with open(translation_output_path, 'r', encoding='utf-8') as f:
             translated_answers = f.readlines()
 
         number_annotations = []
