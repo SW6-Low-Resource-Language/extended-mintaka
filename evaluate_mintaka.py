@@ -50,7 +50,7 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
     max_hit_true_label = max(true_hits, key=true_hits.get)
     max_hit_false_label = max(false_hits, key=false_hits.get)
 
-    #Step 3 : Calculate semantic similarity scores
+    """  #Step 3 : Calculate semantic similarity scores
     sem_score_output_path = get_generation_path("sem_scores_json", mode, lang)
     perform_semantic_similarity(
         lang=lang, 
@@ -61,7 +61,7 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
         output_json_path=sem_score_output_path
     ) 
     run_semantic_similarity_analysis(lang, mode) 
-
+    """
     
 
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     with open('./configurations/questions_label_lang_dict.json', 'r', encoding='utf-8') as file:
         questions_label_dict = json.load(file)
 
-    lang = "bn"  
+    lang = "da"  
     mode = "zeroshot"
 
     run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict)
