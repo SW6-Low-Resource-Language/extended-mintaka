@@ -13,6 +13,7 @@ with open('./data/mintaka_test_extended.json', 'r', encoding='utf-8') as file:
     data = json.load(file)
 
 lang = 'da'
+# lang = 'bn'
 # [{id: "blabla", question: "yaya", label: "xdd"}]
 
 local_question_answer = []
@@ -33,20 +34,26 @@ for question in data:
     local_question_answer.append(qa_entity)
     
 
-pre_prompt = "Svar på det følgende spørgsmål:\n Spørgsmål: "
+# pre_prompt = "Svar på det følgende spørgsmål:\n Spørgsmål: "
+# post_prompt = "\nSvar: "
+
+# pre_prompt = "নিম্নলিখিত প্রশ্নের উত্তর দিন এবং প্রতিটি উত্তরের জন্য একটি কনফিডেন্স স্কোর প্রদান করুন\n প্রশ্ন:"
+# post_prompt = "\nউত্তর:"
+
+pre_prompt = "Svar på det følgende spørgsmål og giv en confidence score til svaret:\n Spørgsmål: "
 post_prompt = "\nSvar: "
 
 prompts = [pre_prompt + entry['question'] + post_prompt
         for entry in local_question_answer]
 
 #pretrained_model = "meta-llama/Llama-3.2-1B-Instruct"
-pretrained_model = "meta-llama/Llama-3.3-70B-Instruct"
+# pretrained_model = "meta-llama/Llama-3.3-70B-Instruct"
+pretrained_model = "google/mt5-xl"
 
 llm = LLM(model=pretrained_model, 
-        tensor_parallel_size=8,
-        dtype="float16",
-        gpu_memory_utilization=1,
-        cpu_offload_gb=32,
+        tensor_parallel_size=1,
+        gpu_memory_utilization=0.95,
+        cpu_offload_gb=24,
         enforce_eager=True)
 sampling_params = SamplingParams(
     max_tokens=50,

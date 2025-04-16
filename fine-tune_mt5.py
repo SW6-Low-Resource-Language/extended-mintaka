@@ -37,13 +37,13 @@ gradient_accumulation_steps = 4
 val_batch_size = 16
 
 num_epochs = 2
-learning_rate = 3e-6
-max_length = 64
+learning_rate = 1e-6
+max_length = 128
 
 
 # torch.cuda.empty_cache()
-for i in range(torch.cuda.device_count()):
-    torch.cuda.set_per_process_memory_fraction(0.95, device=i)
+# for i in range(torch.cuda.device_count()):
+#     torch.cuda.set_per_process_memory_fraction(0.95, device=i)
 
 if isMT5:
     tokenizer = MT5Tokenizer.from_pretrained(pre_trained_model)
@@ -63,6 +63,8 @@ optimizer = AdamW(model.parameters(), lr=learning_rate)
 if rank == 0:
     preprocess_data(training_file, lang)
     preprocess_data(validation_file, lang)
+
+dist.barrier()
 
 
 training_data_pairs = training_file.replace('.json', '_qa_pairs_' + lang + '.json')
@@ -122,6 +124,8 @@ if rank == 0:
     print(f"Effective number of batches per epoch: {len(training_loader) // dist.get_world_size()}")
     print(f"DataLoader batch size: {training_loader.batch_size}")
 
+print(f"[Rank {rank}] Total samples after padding: {len(training_sampler)}")
+
 num_training_steps = num_epochs * len(training_loader)
 
 model_engine, optimizer, _, lr_scheduler = initialize(
@@ -133,14 +137,17 @@ model_engine, optimizer, _, lr_scheduler = initialize(
         "zero_optimization": {
             "stage": 3
         },
-        "offload_optimizer": {
-            "device": "none",
-        },
         "offload_param": {
-            "device": "none",
+            "device": "cpu",
+            "pin_memory": True
+        },
+        "offload_optimizer": {
+            "device": "cpu",
+            "pin_memory": True
         },
         "fp16": {
             "enabled": True,
+            "auto_cast": True,
             "initial_scale_power": 16,
              "min_loss_scale": 128 
         },
@@ -187,6 +194,10 @@ for epoch in range(start_epoch, num_epochs):
         outputs = model_engine(input_ids, attention_mask=attention_mask, labels=input_ids)
         loss = outputs.loss
         model_engine.backward(loss)
+
+        # total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), 2) for p in model_engine.parameters() if p.grad is not None]), 2)
+        # print(f"[Rank {rank}] Gradient Norm: {total_norm}")
+    
         torch.nn.utils.clip_grad_norm_(model_engine.parameters(), max_norm=1.0)
         model_engine.step()
 
@@ -195,9 +206,13 @@ for epoch in range(start_epoch, num_epochs):
         print(f"Time elapsed: {time.time() - start:.2f} seconds")
 
     model_engine.eval()
+    print(f"[Rank {rank}] Model_engine set to evaluation mode")
+
     val_loss = 0
     with torch.no_grad():
         for batch_idx, (input_ids, attention_mask) in enumerate(test_loader):
+            print(f"[Rank {rank}] Epoch {epoch} - validation Batch {batch_idx}")
+
             input_ids = input_ids.to(model_engine.device)
             attention_mask = attention_mask.to(model_engine.device)
 
@@ -210,10 +225,15 @@ for epoch in range(start_epoch, num_epochs):
         print(f'Epoch {epoch}: Validation Loss {val_loss}')
 
 
+    model_engine.save_checkpoint(
+        checkpoint_dir,
+        tag=f'{pre_trained_model}_{lang}_{epoch}',
+        client_state={"save_optimizer_states": False})
     if rank == 0:
         print(f"Training completed in {time.time() - start:.2f} seconds")
-        model_engine.save_checkpoint(checkpoint_dir, tag=f'{pre_trained_model}_{lang}_{epoch}')
         print(f"Model saved to {checkpoint_dir}")
+
+    dist.barrier()
 
 if dist.is_initialized():
     dist.destroy_process_group()
