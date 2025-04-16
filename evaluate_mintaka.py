@@ -74,7 +74,7 @@ if __name__ == "__main__":
     with open('./configurations/questions_label_lang_dict.json', 'r', encoding='utf-8') as file:
         questions_label_dict = json.load(file)
 
-    lang = "da"  
+    lang = "bn"  
     mode = "zeroshot"
 
     run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict)

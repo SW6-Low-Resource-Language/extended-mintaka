@@ -36,6 +36,6 @@
         "description": "Path to json file containing processed test data"
     },
     "processesing_numerical_translations": {
-        "path": "outputs/LANG/MODE/translated_num_answers.txt"
+        "path": "outputs/processesing_numerical_answers_for_translation/LANG/MODE/translated_num_answers.txt"
     }
 }
