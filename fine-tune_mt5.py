@@ -32,8 +32,8 @@ training_file = "./data/mintaka_dev_extended.json"
 # training_file = "./data/mintaka_train_extended.json"
 validation_file = "./data/mintaka_test_extended.json"
 
-train_micro_batch_size_per_gpu = 32
-gradient_accumulation_steps = 1
+train_micro_batch_size_per_gpu = 16
+gradient_accumulation_steps = 4
 val_batch_size = 16
 
 num_epochs = 2
@@ -137,14 +137,17 @@ model_engine, optimizer, _, lr_scheduler = initialize(
         "zero_optimization": {
             "stage": 3
         },
-        "offload_optimizer": {
-            "device": "none",
-        },
         "offload_param": {
-            "device": "none",
+            "device": "cpu",
+            "pin_memory": True
+        },
+        "offload_optimizer": {
+            "device": "cpu",
+            "pin_memory": True
         },
         "fp16": {
-            "enabled": False,
+            "enabled": True,
+            "auto_cast": True,
             "initial_scale_power": 16,
              "min_loss_scale": 128 
         },
