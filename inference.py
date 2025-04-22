@@ -1,9 +1,8 @@
-from vllm import LLM, SamplingParams
-import os
 import json
-from dotenv import load_dotenv
+from transformers import AutoTokenizer, AutoModelForCausalLM, MT5Tokenizer, MT5ForConditionalGeneration
+import torch
 
-os.environ["HUGGING_FACE_HUB_TOKEN"] = os.getenv("HF_TOKEN")
+# os.environ["HUGGING_FACE_HUB_TOKEN"] = os.getenv("HF_TOKEN")
 # load_dotenv()
 # os.environ = os.getenv("hf_token2")
 
@@ -14,7 +13,6 @@ with open('./data/mintaka_test_extended.json', 'r', encoding='utf-8') as file:
 
 lang = 'da'
 # lang = 'bn'
-# [{id: "blabla", question: "yaya", label: "xdd"}]
 
 local_question_answer = []
 for question in data:
@@ -34,9 +32,6 @@ for question in data:
     local_question_answer.append(qa_entity)
     
 
-# pre_prompt = "Svar på det følgende spørgsmål:\n Spørgsmål: "
-# post_prompt = "\nSvar: "
-
 # pre_prompt = "নিম্নলিখিত প্রশ্নের উত্তর দিন এবং প্রতিটি উত্তরের জন্য একটি কনফিডেন্স স্কোর প্রদান করুন\n প্রশ্ন:"
 # post_prompt = "\nউত্তর:"
 
@@ -46,37 +41,40 @@ post_prompt = "\nSvar: "
 prompts = [pre_prompt + entry['question'] + post_prompt
         for entry in local_question_answer]
 
-#pretrained_model = "meta-llama/Llama-3.2-1B-Instruct"
+# pretrained_model = "meta-llama/Llama-3.2-1B-Instruct"
 # pretrained_model = "meta-llama/Llama-3.3-70B-Instruct"
-pretrained_model = "google/mt5-xl"
+# pretrained_model = "google/mt5-xl"
 
-llm = LLM(model=pretrained_model, 
-        tensor_parallel_size=1,
-        gpu_memory_utilization=0.95,
-        cpu_offload_gb=24,
-        enforce_eager=True)
-sampling_params = SamplingParams(
-    max_tokens=50,
-    temperature=0.7, 
-    n=5 
-)
+pre_trained_model = "google/mt5-small"
 
-# Generate responses for each prompt
+
+isMT5 = True
+
+if isMT5: # fra fine-tune_mt5.py 
+    tokenizer = MT5Tokenizer.from_pretrained(pre_trained_model)
+    model = MT5ForConditionalGeneration.from_pretrained(pre_trained_model)
+else:
+   tokenizer = AutoTokenizer.from_pretrained(pre_trained_model)
+   model = AutoModelForCausalLM.from_pretrained(pre_trained_model) 
+
+
+# inputs = tokenizer.encode(local_question_answer, return_tensors="pt")
 results = []
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #to speed up local processing for now
+model = model.to(device)
 
-outputs = llm.generate(prompts, sampling_params)
+for idx, prompt in enumerate(prompts[:1]): #issuess with predicted answer not resolved -- 'predicted_answer': '<extra_id_0>?'}], typical mt5 token for masking the part it needs to predict 
+    inputs = tokenizer(prompt, return_tensors="pt", padding=True, truncation=True, max_length=512) #most mt5's use max token length 512 as default
+    outputs = model.generate(**inputs, max_length=50, num_beams=5, early_stopping=True)
+    answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    print(outputs)
+    
+    results.append({
+        "id": local_question_answer[idx]["id"],
+        "question": local_question_answer[idx]["question"],
+        "true_answer": local_question_answer[idx]["answer"],
+        "predicted_answer": answer
+    })
 
-for output in outputs:
-    for i in range(len(output.outputs)):
-        print(f"{i}: Prompt: {output.prompt!r}, Generated text: {output.outputs[i].text!r}")
-
-#for prompt, output in zip(prompts, outputs):
- #   results.append({
-  #      "prompt": prompt,
-   #     "responses": outputs
-   # })
-
-#output_file = "results_" + pretrained_model.replace("/", "_") + '_' + lang + '.json'
-#with open(output_file, 'w', encoding='utf-8') as file:
- #   json.dump(results, file, ensure_ascii=False, indent=4)
+print(results)
