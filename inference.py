@@ -1,5 +1,6 @@
 import json
-from transformers import AutoTokenizer, AutoModelForCausalLM, MT5Tokenizer, MT5ForConditionalGeneration
+#from transformers import AutoTokenizer, AutoModelForCausalLM, MT5Tokenizer, MT5ForConditionalGeneration
+from transformers import ByT5Tokenizer, T5ForConditionalGeneration
 import torch
 
 # os.environ["HUGGING_FACE_HUB_TOKEN"] = os.getenv("HF_TOKEN")
@@ -45,20 +46,24 @@ prompts = [pre_prompt + entry['question'] + post_prompt
 # pretrained_model = "meta-llama/Llama-3.3-70B-Instruct"
 # pretrained_model = "google/mt5-xl"
 
-pre_trained_model = "google/mt5-small"
+#pre_trained_model = "google/mt5-small"
 
-
+pre_trained_model = "google/byt5-small" #tries this model to fix the predicted_answer': '<extra_id_0>?' issue 
 isMT5 = True
 
 if isMT5: # fra fine-tune_mt5.py 
-    tokenizer = MT5Tokenizer.from_pretrained(pre_trained_model)
-    model = MT5ForConditionalGeneration.from_pretrained(pre_trained_model)
+    #tokenizer = MT5Tokenizer.from_pretrained(pre_trained_model)
+    #model = MT5ForConditionalGeneration.from_pretrained(pre_trained_model)
+    tokenizer = ByT5Tokenizer.from_pretrained(pre_trained_model)
+    model = T5ForConditionalGeneration.from_pretrained(pre_trained_model)   
 else:
-   tokenizer = AutoTokenizer.from_pretrained(pre_trained_model)
-   model = AutoModelForCausalLM.from_pretrained(pre_trained_model) 
+   #tokenizer = AutoTokenizer.from_pretrained(pre_trained_model)
+   #model = AutoModelForCausalLM.from_pretrained(pre_trained_model) 
+   tokenizer = ByT5Tokenizer.from_pretrained(pre_trained_model)
+   model = T5ForConditionalGeneration.from_pretrained(pre_trained_model)
+   
 
 
-# inputs = tokenizer.encode(local_question_answer, return_tensors="pt")
 results = []
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #to speed up local processing for now
@@ -68,7 +73,6 @@ for idx, prompt in enumerate(prompts[:1]): #issuess with predicted answer not re
     inputs = tokenizer(prompt, return_tensors="pt", padding=True, truncation=True, max_length=512) #most mt5's use max token length 512 as default
     outputs = model.generate(**inputs, max_length=50, num_beams=5, early_stopping=True)
     answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    print(outputs)
     
     results.append({
         "id": local_question_answer[idx]["id"],
