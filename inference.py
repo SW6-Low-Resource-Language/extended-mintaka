@@ -12,14 +12,14 @@ import torch
 with open('./data/mintaka_test_extended.json', 'r', encoding='utf-8') as file:
     data = json.load(file)
 
-lang = 'da'
+lang = 'en'
 # lang = 'bn'
 
 local_question_answer = []
 for question in data:
     qa_entity = {
             "id": question['id'],
-            "question": question['translations'][lang],
+            "question": question['question'],
         }
     answer = question['answer']
     if answer['answerType'] in ["numerical", "boolean", "date", "string"]:
@@ -36,8 +36,8 @@ for question in data:
 # pre_prompt = "নিম্নলিখিত প্রশ্নের উত্তর দিন এবং প্রতিটি উত্তরের জন্য একটি কনফিডেন্স স্কোর প্রদান করুন\n প্রশ্ন:"
 # post_prompt = "\nউত্তর:"
 
-pre_prompt = "Svar på det følgende spørgsmål og giv en confidence score til svaret:\n Spørgsmål: "
-post_prompt = "\nSvar: "
+pre_prompt = " "
+post_prompt = " "
 
 prompts = [pre_prompt + entry['question'] + post_prompt
         for entry in local_question_answer]
@@ -46,9 +46,9 @@ prompts = [pre_prompt + entry['question'] + post_prompt
 # pretrained_model = "meta-llama/Llama-3.3-70B-Instruct"
 # pretrained_model = "google/mt5-xl"
 
-#pre_trained_model = "google/mt5-small"
+#pre_trained_model = "google/mt5-small" 
 
-pre_trained_model = "google/byt5-small" #tries this model to fix the predicted_answer': '<extra_id_0>?' issue 
+pre_trained_model = "google/byt5-small" 
 isMT5 = True
 
 if isMT5: # fra fine-tune_mt5.py 
@@ -69,7 +69,7 @@ results = []
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #to speed up local processing for now
 model = model.to(device)
 
-for idx, prompt in enumerate(prompts[:1]): #issuess with predicted answer not resolved -- 'predicted_answer': '<extra_id_0>?'}], typical mt5 token for masking the part it needs to predict 
+for idx, prompt in enumerate(prompts[:1]): 
     inputs = tokenizer(prompt, return_tensors="pt", padding=True, truncation=True, max_length=512) #most mt5's use max token length 512 as default
     outputs = model.generate(**inputs, max_length=50, num_beams=5, early_stopping=True)
     answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
