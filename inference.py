@@ -19,7 +19,7 @@ local_question_answer = []
 for question in data:
     qa_entity = {
             "id": question['id'],
-            "question": question['question'], #refers to question property in json file, change to ['translations'][lang] for da/be
+            "question": question['question'], 
         }
     answer = question['answer']
     if answer['answerType'] in ["numerical", "boolean", "date", "string"]:
