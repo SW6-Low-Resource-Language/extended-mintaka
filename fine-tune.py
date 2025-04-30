@@ -10,7 +10,6 @@ from torch.utils.data import DataLoader, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_scheduler, MT5Tokenizer, MT5ForConditionalGeneration
-# from deepspeed import initialize
 
 from accelerate import Accelerator
 
@@ -21,10 +20,8 @@ print("Finished importing modules")
 if not dist.is_initialized():
     dist.init_process_group(backend="nccl")
 
-#rank = dist.get_rank()
 rank = int(os.getenv("RANK", 0))	
 world_size = int(os.getenv("WORLD_SIZE", 1))
-# rank = int(os.getenv("LOCAL_RANK", 0))
  
 
 os.environ["HUGGING_FACE_HUB_TOKEN"] = os.getenv("HF_TOKEN")
@@ -149,12 +146,7 @@ lr_scheduler = get_scheduler(
 
 checkpoint_dir = 'checkpoints_' + lang
 os.makedirs(checkpoint_dir, exist_ok=True)
-# if os.path.exists(f"{checkpoint_dir}/checkpoint_{epoch}.pt"):
-#     checkpoint = torch.load(f"{checkpoint_dir}/checkpoint_{epoch}.pt", map_location=accelerator.device)
-#     model.load_state_dict(checkpoint["model_state_dict"])
-#     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-# else:
-#     start_epoch = 0
+
 start_epoch = 0
 
 start = time.time()
@@ -182,10 +174,6 @@ for epoch in range(start_epoch, num_epochs):
             loss = outputs.loss
             accelerator.backward(loss)
             
-            # total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), 2) for p in model.parameters() if p.grad is not None]), 2)
-            # print(f"[Rank {rank}] Gradient Norm: {total_norm}")
-        
-            # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             optimizer.zero_grad()
 
@@ -219,10 +207,6 @@ for epoch in range(start_epoch, num_epochs):
             "optimizer_state_dict": optimizer.state_dict(),
         }, f"{checkpoint_dir}/checkpoint_{epoch}.pt")
 
-    # model.save_checkpoint(
-    #     checkpoint_dir,
-    #     tag=f'{pre_trained_model}_{lang}_{epoch}',
-    #     client_state={"save_optimizer_states": False})
     if rank == 0:
         print(f"Training completed in {time.time() - start:.2f} seconds")
         print(f"Model saved to {checkpoint_dir}")

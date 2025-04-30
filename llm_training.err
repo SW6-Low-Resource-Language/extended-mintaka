@@ -1,37 +1,0 @@
-The new embeddings will be initialized from a multivariate normal distribution that has old embeddings' mean and covariance. As described in this article: https://nlp.stanford.edu/~johnhew/vocab-expansion.html. To disable this, use `mean_resizing=False`
-Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 1776 examples [00:00, 44107.17 examples/s]
-Generating validation split: 0 examples [00:00, ? examples/s]Generating validation split: 3612 examples [00:00, 151762.33 examples/s]
-Traceback (most recent call last):
-  File "/ceph/home/student.aau.dk/sd48tq/extended-mintaka/train_llm2.py", line 184, in <module>
-    optimizer.step()
-  File "/ceph/home/student.aau.dk/sd48tq/.local/lib/python3.12/site-packages/accelerate/optimizer.py", line 165, in step
-    self.scaler.step(self.optimizer, closure)
-  File "/usr/local/lib/python3.12/dist-packages/torch/amp/grad_scaler.py", line 457, in step
-    retval = self._maybe_opt_step(optimizer, optimizer_state, *args, **kwargs)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/dist-packages/torch/amp/grad_scaler.py", line 352, in _maybe_opt_step
-    retval = optimizer.step(*args, **kwargs)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/ceph/home/student.aau.dk/sd48tq/.local/lib/python3.12/site-packages/accelerate/optimizer.py", line 210, in patched_step
-    return method(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/dist-packages/torch/optim/lr_scheduler.py", line 140, in wrapper
-    return func.__get__(opt, opt.__class__)(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/dist-packages/torch/optim/optimizer.py", line 494, in wrapper
-    out = func(*args, **kwargs)
-          ^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/dist-packages/torch/optim/optimizer.py", line 92, in _use_grad
-    ret = func(self, *args, **kwargs)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/dist-packages/torch/optim/adam.py", line 244, in step
-    adam(
-  File "/usr/local/lib/python3.12/dist-packages/torch/optim/optimizer.py", line 155, in maybe_fallback
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/dist-packages/torch/optim/adam.py", line 876, in adam
-    func(
-  File "/usr/local/lib/python3.12/dist-packages/torch/optim/adam.py", line 703, in _multi_tensor_adam
-    exp_avg_sq_sqrt = torch._foreach_sqrt(device_exp_avg_sqs)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 64.00 MiB. GPU 1 has a total capacity of 22.05 GiB of which 905.94 MiB is free. Including non-PyTorch memory, this process has 21.15 GiB memory in use. 20.94 GiB allowed; Of the allocated memory 20.76 GiB is allocated by PyTorch, and 167.65 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
