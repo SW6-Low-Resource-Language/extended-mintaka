@@ -14,7 +14,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, get_scheduler, MT5
 
 from accelerate import Accelerator
 
-accelerator = Accelerator()
+accelerator = Accelerator(mixed_precision="no")
 
 print("Finished importing modules")
 
@@ -31,27 +31,27 @@ os.environ["HUGGING_FACE_HUB_TOKEN"] = os.getenv("HF_TOKEN")
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 os.environ["PYTORCH_NO_CUDA_MEMORY_CACHING"] = "1"
 
-lang='da'
+lang='bn'
 
 isMT5 = True
-pre_trained_model = "google/mt5-xl"
+pre_trained_model = "google/mt5-base"
 
 #training_file = "./data/mintaka_dev_extended.json"
 training_file = "./data/mintaka_train_extended.json"
 validation_file = "./data/mintaka_test_extended.json"
 
 train_micro_batch_size_per_gpu = 4
-gradient_accumulation_steps = 8
+gradient_accumulation_steps = 4
 val_batch_size = 16
 
-num_epochs = 2
+num_epochs = 50
 learning_rate = 1e-7
 max_length = 128
 
 
-# torch.cuda.empty_cache()
-# for i in range(torch.cuda.device_count()):
-#     torch.cuda.set_per_process_memory_fraction(0.95, device=i)
+torch.cuda.empty_cache()
+for i in range(torch.cuda.device_count()):
+    torch.cuda.set_per_process_memory_fraction(0.95, device=i)
 
 
 if isMT5:
@@ -126,12 +126,6 @@ test_loader = DataLoader(
 )
 
 
-model, optimizer, training_loader, test_loader = accelerator.prepare(
-    model, optimizer, training_loader, test_loader
-)
-
-
-
 if rank == 0:
     print(f"Training dataset size: {len(training_dataset)}")
     print(f"DataLoader batch size: {training_loader.batch_size}")
@@ -139,6 +133,10 @@ if rank == 0:
     print(f"DataLoader batch size: {training_loader.batch_size}")
 
 print(f"[Rank {rank}] Total samples after padding: {len(training_sampler)}")
+
+model, optimizer, training_loader, test_loader = accelerator.prepare(
+    model, optimizer, training_loader, test_loader
+)
 
 num_training_steps = num_epochs * len(training_loader)
 
@@ -174,15 +172,16 @@ for epoch in range(start_epoch, num_epochs):
     print(f"[Rank {rank}] model set to training mode")
     for batch_idx, (input_ids, attention_mask) in enumerate(training_loader):
         with accelerator.accumulate(model):
-            print(f"[Rank {rank}] Epoch {epoch}, Batch {batch_idx}")
+            if batch_idx % 10 == 0:
+                print(f"[Rank {rank}] Epoch {epoch}, Batch {batch_idx}")
 
             input_ids = input_ids.to(accelerator.device)
             attention_mask = attention_mask.to(accelerator.device)
 
             outputs = model(input_ids, attention_mask=attention_mask, labels=input_ids)
             loss = outputs.loss
-            model.backward(loss)
-
+            accelerator.backward(loss)
+            
             # total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), 2) for p in model.parameters() if p.grad is not None]), 2)
             # print(f"[Rank {rank}] Gradient Norm: {total_norm}")
         
@@ -190,17 +189,18 @@ for epoch in range(start_epoch, num_epochs):
             optimizer.step()
             optimizer.zero_grad()
 
-        if rank == 0:
-            print(f'Epoch {epoch}: Loss {loss.item()}')
-            print(f"Time elapsed: {time.time() - start:.2f} seconds")
+    if rank == 0:
+        print(f'Epoch {epoch}: Loss {loss.item()}')
+        print(f"Time elapsed: {time.time() - start:.2f} seconds")
 
-        model.eval()
-        print(f"[Rank {rank}] model set to evaluation mode")
+    model.eval()
+    print(f"[Rank {rank}] model set to evaluation mode")
 
     val_loss = 0
     with torch.no_grad():
         for batch_idx, (input_ids, attention_mask) in enumerate(test_loader):
-            print(f"[Rank {rank}] Epoch {epoch} - validation Batch {batch_idx}")
+            if batch_idx % 10 == 0:
+                print(f"[Rank {rank}] Epoch {epoch} - validation Batch {batch_idx}")
 
             input_ids = input_ids.to(accelerator.device)
             attention_mask = attention_mask.to(accelerator.device)
@@ -213,11 +213,11 @@ for epoch in range(start_epoch, num_epochs):
     if rank == 0:
         print(f'Epoch {epoch}: Validation Loss {val_loss}')
 
-
-    accelerator.save({
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(),
-    }, f"{checkpoint_dir}/checkpoint_{epoch}.pt")
+    if epoch % 10 == 0 or epoch == num_epochs - 1:
+        accelerator.save({
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+        }, f"{checkpoint_dir}/checkpoint_{epoch}.pt")
 
     # model.save_checkpoint(
     #     checkpoint_dir,
