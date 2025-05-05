@@ -34,15 +34,16 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
         answers_label,
         lang
     )
-    processed_answers = pre_process_data(parsed_answers,mode, lang)  # This function is assumed to be defined in pre_process_data.py
+    # processed_answers = pre_process_data(parsed_answers,mode, lang)  # This function is assumed to be defined in pre_process_data.py
     processed_data_path = get_generation_path("processed_test_data", mode, lang)
-    with open(processed_data_path, 'w', encoding='utf-8') as file:
-        json.dump(processed_answers, file, ensure_ascii=False, indent=4)
+    with open(processed_data_path, 'r', encoding='utf-8') as file:
+        processed_answers = json.load(file)
 
 
     hits_output_path = get_generation_path("hit_annotation_json", mode, lang)
     hits_obj, bool_hits = hits_at_k_string_match(processed_answers, comparative_dict, lang, hits_output_path)
-    calc_hits_at_ks(hits_obj,5) 
+    hits_excel_path = get_generation_path("hits_k_excel", mode, lang)
+    calc_hits_at_ks(hits_obj,5, hits_excel_path) 
 
     true_hits = bool_hits["True"]  
     false_hits = bool_hits["False"]
@@ -74,7 +75,7 @@ if __name__ == "__main__":
     with open('./configurations/questions_label_lang_dict.json', 'r', encoding='utf-8') as file:
         questions_label_dict = json.load(file)
 
-    lang = "bn"  
+    lang = "da"  
     mode = "zeroshot"
 
     run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict)

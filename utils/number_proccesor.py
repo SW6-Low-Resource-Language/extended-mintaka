@@ -4,6 +4,17 @@ text = "৪টি দেশ ছিল। \\nকনফ "
 
 
 def replace_entire_word_if_digit(text):
+    """
+    Replaces any word in the input text that contains Unicode digits with its corresponding Arabic numeral representation.
+
+    This function scans the input text for words containing Unicode digits (e.g., Bengali, Arabic, or other numeral systems) and replaces the entire word with the Arabic numeral equivalent. Words without digits remain unchanged.
+
+    Args:
+        text (str): The input text containing words with Unicode digits.
+
+    Returns:
+        str: The modified text where words with Unicode digits are replaced by their Arabic numeral equivalents.
+    """
     def extract_and_convert(match):
         word = match.group(0)
         # Extract all Unicode digits from the word and convert them

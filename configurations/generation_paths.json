@@ -37,5 +37,9 @@
     },
     "processesing_numerical_translations": {
         "path": "outputs/processesing_numerical_answers_for_translation/LANG/MODE/translated_num_answers.txt"
+    },
+    "hits_k_excel": {
+        "path": "outputs/hits_k_excel/hits_k_MODE_LANG.xlsx",
+        "description": "Path to xlsx file containing hits k for each category"
     }
 }

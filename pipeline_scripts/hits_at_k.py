@@ -71,7 +71,7 @@ def hits_at_k_string_match(h_answers, bool_comparative_dict, lang, output_path):
     bool_hits = {"True": {i: 0 for i in true_list}, "False": {i: 0 for i in false_list}}
 
     for answer in h_answers:
-        question, answers, id, true_answer = answer['question'], answer['answers'], answer['id'], answer['true_answer']
+        question, answers, id, true_answer, answerType = answer['question'], answer['answers'], answer['id'], answer['true_answer'], answer['answerType']
         bool_answer = isinstance(true_answer, bool)
         bool_string = "True" if true_answer is True else "False" if true_answer is False else None
 
@@ -98,6 +98,7 @@ def hits_at_k_string_match(h_answers, bool_comparative_dict, lang, output_path):
         hits_obj[id]['hits'] = hits
         hits_obj[id]['hits_at'] = hits_at
         hits_obj[id]['answers'] = answers
+        hits_obj[id]['answerType'] = answerType
 
 
     with open(output_path, "w", encoding="utf-8") as json_file:
