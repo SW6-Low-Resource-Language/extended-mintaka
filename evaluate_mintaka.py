@@ -6,6 +6,7 @@ from pipeline_scripts.hits_stats import calc_hits_at_ks
 from pipeline_scripts.semantic_similarity import perform_semantic_similarity
 from pipeline_scripts.sem_stat import run_semantic_similarity_analysis 
 from utils.get_generation_path import get_generation_path 
+from utils.get_intersecting_entries import get_intersecting_entries
 
 def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
     """
@@ -22,6 +23,8 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
     """
     # Step 1: Parse LLM output
     dataset_input_json_path = get_generation_path("test_data_extended")
+    with open(dataset_input_json_path, 'r', encoding='utf-8') as file:
+        dataset_input_json = json.load(file)
     questions_label = questions_label_dict['question'][lang]
     answers_label = questions_label_dict['answer'][lang]
     model_input_txt_path = get_generation_path("model_answers", mode, lang)
@@ -42,14 +45,17 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
 
     hits_output_path = get_generation_path("hit_annotation_json", mode, lang)
     hits_obj, bool_hits = hits_at_k_string_match(processed_answers, comparative_dict, lang, hits_output_path)
-    hits_excel_path = get_generation_path("hits_k_excel", mode, lang)
-    calc_hits_at_ks(hits_obj,5, hits_excel_path) 
+    hits_excel_path = get_generation_path("hits_k_excel", mode, lang + "_subset")
+    # Subsets hits_obj
+    sub_entries = get_intersecting_entries(dataset_input_json, ["da", "bn", "fi"])
+    mod_hits_obj = {k: v for k, v in hits_obj.items() if sub_entries.get(k) == True}
+    calc_hits_at_ks(mod_hits_obj,5, hits_excel_path) 
 
     true_hits = bool_hits["True"]  
     false_hits = bool_hits["False"]
 
     max_hit_true_label = max(true_hits, key=true_hits.get)
-    max_hit_false_label = max(false_hits, key=false_hits.get)
+    max_hit_false_label = max(false_hits, key=false_hits.get) 
 
     """  #Step 3 : Calculate semantic similarity scores
     sem_score_output_path = get_generation_path("sem_scores_json", mode, lang)
@@ -60,9 +66,9 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
         true_label=max_hit_true_label, 
         false_label=max_hit_false_label,
         output_json_path=sem_score_output_path
-    ) 
-    run_semantic_similarity_analysis(lang, mode) 
-    """
+    )  """
+    run_semantic_similarity_analysis(lang, mode, sub_entries) 
+    
     
 
 
@@ -75,7 +81,7 @@ if __name__ == "__main__":
     with open('./configurations/questions_label_lang_dict.json', 'r', encoding='utf-8') as file:
         questions_label_dict = json.load(file)
 
-    lang = "da"  
+    lang = "bn"  
     mode = "zeroshot"
 
     run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict)

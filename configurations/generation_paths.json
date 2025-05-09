@@ -28,7 +28,7 @@
         "description": "Path to html file containing interactive plot of the similarity scores across different cateogories"
     },
     "test_data_extended": {
-        "path": "data/mintaka_test_extended.json",
+        "path": "data/mintaka_test_extended2.json",
         "description": "Path to json file containing test data with extended language"
     },
     "processed_test_data": {

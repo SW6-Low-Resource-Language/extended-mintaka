@@ -40,7 +40,7 @@ import json
 
 
 
-def get_intersecting_enries(mintaka_data, languages = ["da", "bn"]): 
+def get_intersecting_entries(mintaka_data, languages = ["da", "bn"]): 
     """
     Get the intersecting entries for the specified languages from the mintaka data.
     Args:

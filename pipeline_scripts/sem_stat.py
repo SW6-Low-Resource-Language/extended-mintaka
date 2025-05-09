@@ -6,6 +6,7 @@ from collections import Counter
 import plotly.graph_objects as go
 import os
 from utils.get_generation_path import get_generation_path
+from utils.get_intersecting_entries import get_intersecting_entries
 
 
 def calculate_mean(array):
@@ -49,7 +50,7 @@ def init_id_variables_map(mintaka_data):
             }
         return id_variables_map
 
-def run_semantic_similarity_analysis(lang, test_type):
+def run_semantic_similarity_analysis(lang, test_type, overlap):
     hits_path = get_generation_path("hit_annotation_json", test_type, lang)
     sem_scores_path = get_generation_path("sem_scores_json", test_type, lang)
     mintaka_path = get_generation_path("test_data_extended", test_type, lang)
@@ -60,9 +61,10 @@ def run_semantic_similarity_analysis(lang, test_type):
     with open(sem_scores_path, 'r', encoding="utf-8") as f:
         sem_data = json.load(f)
 
+
+    sem_data = [entry for entry in sem_data if overlap.get(entry["id"]) == True]
     with open(mintaka_path, 'r', encoding="utf-8") as f:
         mintaka_data = json.load(f)
-
     id_hit_map = init_id_hit_map(hits_data)
     
     id_variables_map = init_id_variables_map(mintaka_data)
@@ -194,7 +196,7 @@ def run_semantic_similarity_analysis(lang, test_type):
         # Write Hits Sem Scores to Excel
         create_hits_semscore_sheet(wb, "Hits_1 Semscores", hits_sem_scores)
         # Save the workbook
-        wb_path = get_generation_path("sem_scores_analysis_sheet", test_type, lang)
+        wb_path = get_generation_path("sem_scores_analysis_sheet", test_type, lang + "_subset")
         wb.save(wb_path)
 
     def create_plots(lang = lang, test_type = test_type):
@@ -261,7 +263,7 @@ def run_semantic_similarity_analysis(lang, test_type):
             # Ensure the directory exists
             output_dir = f"outputs/sem_score_plots/{test_type}/{lang}/"
             ensure_directory_exists(output_dir)
-            plot_path = get_generation_path("sem_scores_stacked_bars_plot", test_type, lang).replace("CATEGORY", variable)
+            plot_path = get_generation_path("sem_scores_stacked_bars_plot", test_type, lang+"_subset").replace("CATEGORY", variable)
             # Save the plot as an image
             plt.savefig(plot_path)
             print(f"Saved stacked bar chart as {plot_path}")
@@ -324,7 +326,7 @@ def run_semantic_similarity_analysis(lang, test_type):
             ensure_directory_exists(output_dir)
 
             # Save the interactive plot as an HTML file
-            plot_path = get_generation_path("sem_scores_interactive_plot", test_type, lang).replace("CATEGORY", variable)
+            plot_path = get_generation_path("sem_scores_interactive_plot", test_type, lang+"_subset").replace("CATEGORY", variable)
             fig.write_html(plot_path)
             print(f"Saved interactive plot as {plot_path}")
 
@@ -341,6 +343,10 @@ def run_semantic_similarity_analysis(lang, test_type):
             create_sem_score_interactive_plot(sem_scores, title, variable)
     # running the different parts of the analysis
     sem_scores_obj, best_performers, worst_performers, hits_sem_scores = calculate_data()
+    print("Calculating data...")
+    print(list(sem_scores_obj.keys())[0])
+
+    print(list(hits_sem_scores.keys())[0])
     create_semscore_analysis_workbook(sem_scores_obj, best_performers, worst_performers, hits_sem_scores)
     create_plots() # Creates stacked bar charts and interactive plots for the sem scores
 

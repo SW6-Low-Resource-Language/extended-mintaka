@@ -1,0 +1,166 @@
+{
+    "total": {
+        "1": {
+            "hits_k": 1147,
+            "hits_tested": 2912,
+            "hits_percent": 0.3938873626373626
+        },
+        "2": {
+            "hits_k": 2261,
+            "hits_tested": 5824,
+            "hits_percent": 0.38822115384615385
+        },
+        "3": {
+            "hits_k": 3386,
+            "hits_tested": 8736,
+            "hits_percent": 0.3875915750915751
+        },
+        "4": {
+            "hits_k": 4543,
+            "hits_tested": 11648,
+            "hits_percent": 0.39002403846153844
+        },
+        "5": {
+            "hits_k": 5676,
+            "hits_tested": 14560,
+            "hits_percent": 0.38983516483516484
+        }
+    },
+    "subsets": {
+        "entity": {
+            "1": {
+                "hits_k": 473,
+                "hits_tested": 1411,
+                "hits_percent": 0.33522324592487596
+            },
+            "2": {
+                "hits_k": 915,
+                "hits_tested": 2822,
+                "hits_percent": 0.32423812898653437
+            },
+            "3": {
+                "hits_k": 1362,
+                "hits_tested": 4233,
+                "hits_percent": 0.32175761871013464
+            },
+            "4": {
+                "hits_k": 1830,
+                "hits_tested": 5644,
+                "hits_percent": 0.32423812898653437
+            },
+            "5": {
+                "hits_k": 2289,
+                "hits_tested": 7055,
+                "hits_percent": 0.3244507441530829
+            }
+        },
+        "numerical": {
+            "1": {
+                "hits_k": 205,
+                "hits_tested": 655,
+                "hits_percent": 0.31297709923664124
+            },
+            "2": {
+                "hits_k": 415,
+                "hits_tested": 1310,
+                "hits_percent": 0.31679389312977096
+            },
+            "3": {
+                "hits_k": 620,
+                "hits_tested": 1965,
+                "hits_percent": 0.3155216284987277
+            },
+            "4": {
+                "hits_k": 835,
+                "hits_tested": 2620,
+                "hits_percent": 0.3187022900763359
+            },
+            "5": {
+                "hits_k": 1034,
+                "hits_tested": 3275,
+                "hits_percent": 0.31572519083969464
+            }
+        },
+        "boolean": {
+            "1": {
+                "hits_k": 357,
+                "hits_tested": 573,
+                "hits_percent": 0.6230366492146597
+            },
+            "2": {
+                "hits_k": 710,
+                "hits_tested": 1146,
+                "hits_percent": 0.6195462478184991
+            },
+            "3": {
+                "hits_k": 1075,
+                "hits_tested": 1719,
+                "hits_percent": 0.6253635834787667
+            },
+            "4": {
+                "hits_k": 1437,
+                "hits_tested": 2292,
+                "hits_percent": 0.6269633507853403
+            },
+            "5": {
+                "hits_k": 1789,
+                "hits_tested": 2865,
+                "hits_percent": 0.6244328097731239
+            }
+        },
+        "date": {
+            "1": {
+                "hits_k": 112,
+                "hits_tested": 265,
+                "hits_percent": 0.4226415094339623
+            },
+            "2": {
+                "hits_k": 219,
+                "hits_tested": 530,
+                "hits_percent": 0.41320754716981134
+            },
+            "3": {
+                "hits_k": 327,
+                "hits_tested": 795,
+                "hits_percent": 0.41132075471698115
+            },
+            "4": {
+                "hits_k": 438,
+                "hits_tested": 1060,
+                "hits_percent": 0.41320754716981134
+            },
+            "5": {
+                "hits_k": 560,
+                "hits_tested": 1325,
+                "hits_percent": 0.4226415094339623
+            }
+        },
+        "string": {
+            "1": {
+                "hits_k": 0,
+                "hits_tested": 8,
+                "hits_percent": 0.0
+            },
+            "2": {
+                "hits_k": 2,
+                "hits_tested": 16,
+                "hits_percent": 0.125
+            },
+            "3": {
+                "hits_k": 2,
+                "hits_tested": 24,
+                "hits_percent": 0.08333333333333333
+            },
+            "4": {
+                "hits_k": 3,
+                "hits_tested": 32,
+                "hits_percent": 0.09375
+            },
+            "5": {
+                "hits_k": 4,
+                "hits_tested": 40,
+                "hits_percent": 0.1
+            }
+        }
+    }
+}
