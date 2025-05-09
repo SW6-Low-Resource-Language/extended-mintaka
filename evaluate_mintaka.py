@@ -45,11 +45,11 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
 
     hits_output_path = get_generation_path("hit_annotation_json", mode, lang)
     hits_obj, bool_hits = hits_at_k_string_match(processed_answers, comparative_dict, lang, hits_output_path)
-    hits_excel_path = get_generation_path("hits_k_excel", mode, lang + "_subset")
+    hits_excel_path = get_generation_path("hits_k_excel", mode, lang)
     # Subsets hits_obj
     sub_entries = get_intersecting_entries(dataset_input_json, ["da", "bn", "fi"])
-    mod_hits_obj = {k: v for k, v in hits_obj.items() if sub_entries.get(k) == True}
-    calc_hits_at_ks(mod_hits_obj,5, hits_excel_path) 
+    # dont pass sub_entries to calc_hits_at_ks if you want to calculate for all entries in the language
+    calc_hits_at_ks(hits_obj,5, hits_excel_path, lang, sub_entries) 
 
     true_hits = bool_hits["True"]  
     false_hits = bool_hits["False"]
@@ -67,6 +67,7 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
         false_label=max_hit_false_label,
         output_json_path=sem_score_output_path
     )  """
+    #dont pass sub_entries to run_semantic_similarity_analysis if you want to calculate for all entries in the language
     run_semantic_similarity_analysis(lang, mode, sub_entries) 
     
     

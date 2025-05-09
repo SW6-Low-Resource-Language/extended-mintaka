@@ -24,17 +24,23 @@ def hits_at_k(hits_data, k):
     hits_percent = hits_k / hits_tested
     return {"hits_k": hits_k, "hits_tested": hits_tested, "hits_percent": hits_percent}
 
-def calc_hits_at_ks(hits_data, k, excel_path):
+def calc_hits_at_ks(hits_data, k, excel_path, lang, overlap = None):
     """
     Calculate hits at k for the entire dataset and subsets grouped by answerType.
 
     Args:
         hits_data (dict): The hits data containing questions and their hits.
         k (int): The maximum value of k to calculate hits at.
+        excel_path (str): The path to save the Excel file.
+        lang (str): The language code used for processing.
+        overlap (dict, optional): A dictionary indicating whether to include each question based on its ID.
 
     Returns:
         dict: A dictionary containing hits at k for the total dataset and subsets.
     """
+    if overlap is not None:
+        hits_data = {k: v for k, v in hits_data.items() if overlap.get(k) == True}
+        excel_path.replace(f"{lang}", f"{lang}_subset")
     # Group hits_data by answerType
     subsets = {}
     for key, question in hits_data.items():

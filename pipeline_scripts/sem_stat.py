@@ -50,7 +50,7 @@ def init_id_variables_map(mintaka_data):
             }
         return id_variables_map
 
-def run_semantic_similarity_analysis(lang, test_type, overlap):
+def run_semantic_similarity_analysis(lang, test_type, overlap = None):
     hits_path = get_generation_path("hit_annotation_json", test_type, lang)
     sem_scores_path = get_generation_path("sem_scores_json", test_type, lang)
     mintaka_path = get_generation_path("test_data_extended", test_type, lang)
@@ -61,8 +61,9 @@ def run_semantic_similarity_analysis(lang, test_type, overlap):
     with open(sem_scores_path, 'r', encoding="utf-8") as f:
         sem_data = json.load(f)
 
+    if overlap != None:
+        sem_data = [entry for entry in sem_data if overlap.get(entry["id"]) == True]
 
-    sem_data = [entry for entry in sem_data if overlap.get(entry["id"]) == True]
     with open(mintaka_path, 'r', encoding="utf-8") as f:
         mintaka_data = json.load(f)
     id_hit_map = init_id_hit_map(hits_data)
@@ -196,7 +197,9 @@ def run_semantic_similarity_analysis(lang, test_type, overlap):
         # Write Hits Sem Scores to Excel
         create_hits_semscore_sheet(wb, "Hits_1 Semscores", hits_sem_scores)
         # Save the workbook
-        wb_path = get_generation_path("sem_scores_analysis_sheet", test_type, lang + "_subset")
+        lang_arg = lang if overlap == None else lang + "_subset"
+
+        wb_path = get_generation_path("sem_scores_analysis_sheet", test_type, lang_arg)
         wb.save(wb_path)
 
     def create_plots(lang = lang, test_type = test_type):
@@ -263,7 +266,8 @@ def run_semantic_similarity_analysis(lang, test_type, overlap):
             # Ensure the directory exists
             output_dir = f"outputs/sem_score_plots/{test_type}/{lang}/"
             ensure_directory_exists(output_dir)
-            plot_path = get_generation_path("sem_scores_stacked_bars_plot", test_type, lang+"_subset").replace("CATEGORY", variable)
+            lang_arg = lang if overlap == None else lang + "_subset"
+            plot_path = get_generation_path("sem_scores_stacked_bars_plot", test_type, lang_arg).replace("CATEGORY", variable)
             # Save the plot as an image
             plt.savefig(plot_path)
             print(f"Saved stacked bar chart as {plot_path}")
@@ -326,7 +330,8 @@ def run_semantic_similarity_analysis(lang, test_type, overlap):
             ensure_directory_exists(output_dir)
 
             # Save the interactive plot as an HTML file
-            plot_path = get_generation_path("sem_scores_interactive_plot", test_type, lang+"_subset").replace("CATEGORY", variable)
+            lang_arg = lang if overlap == None else lang + "_subset"
+            plot_path = get_generation_path("sem_scores_interactive_plot", test_type, lang_arg).replace("CATEGORY", variable)
             fig.write_html(plot_path)
             print(f"Saved interactive plot as {plot_path}")
 
