@@ -22,7 +22,7 @@ def preprocess_data(filename, lang):
 
         if entry['answer']['answerType'] == 'string':
             answer = entry['answer']['answer'][0]
-            if answer.lower() in comparative_dict_lang:
+            if answer.lower() in comparative_dict_lang and lang != 'en':
                 answer = comparative_dict_lang[answer.lower()]
         elif entry['answer']['answerType'] == 'boolean':
             answer = entry['answer']['answer'][0]

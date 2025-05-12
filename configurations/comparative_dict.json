@@ -16,5 +16,18 @@
         "same": "একই",
         "less": "কম",
         "both": "উভয়"
+    },
+    "fi": {
+        "true_list": ["Totta", "oikea", "kyllä", "oikealle"],
+        "false_list": ["väärä", "ei"],
+        "after": "jälkeen",
+        "before": "ennen",
+        "same": "sama",
+        "less": "vähemmän",
+        "both": "molemmat"
+    },
+    "en": {
+        "true_list": ["True"],
+        "false_list": ["False"]
     }
 }
