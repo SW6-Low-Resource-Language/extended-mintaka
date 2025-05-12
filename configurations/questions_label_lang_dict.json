@@ -1,11 +1,12 @@
- {
-    "question" : {
+{
+    "question": {
         "da": "Spørgsmål",
-        "bn": "প্রশ্ন"
-    }
-    ,
-    "answer" : {
+        "bn": "প্রশ্ন",
+        "en": "Question"
+    },
+    "answer": {
         "da": "Svar",
-        "bn": "উত্তর"
+        "bn": "উত্তর",
+        "en": "Answer"
     }
 }

@@ -37,7 +37,7 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
         answers_label,
         lang
     )
-    # processed_answers = pre_process_data(parsed_answers,mode, lang)  # This function is assumed to be defined in pre_process_data.py
+    """ # processed_answers = pre_process_data(parsed_answers,mode, lang)  # This function is assumed to be defined in pre_process_data.py
     processed_data_path = get_generation_path("processed_test_data", mode, lang)
     with open(processed_data_path, 'r', encoding='utf-8') as file:
         processed_answers = json.load(file)
@@ -57,7 +57,7 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
     max_hit_true_label = max(true_hits, key=true_hits.get)
     max_hit_false_label = max(false_hits, key=false_hits.get) 
 
-    """  #Step 3 : Calculate semantic similarity scores
+    #Step 3 : Calculate semantic similarity scores
     sem_score_output_path = get_generation_path("sem_scores_json", mode, lang)
     perform_semantic_similarity(
         lang=lang, 
@@ -66,9 +66,9 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
         true_label=max_hit_true_label, 
         false_label=max_hit_false_label,
         output_json_path=sem_score_output_path
-    )  """
+    )  
     #dont pass sub_entries to run_semantic_similarity_analysis if you want to calculate for all entries in the language
-    run_semantic_similarity_analysis(lang, mode, sub_entries) 
+    run_semantic_similarity_analysis(lang, mode, sub_entries)  """
     
     
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     with open('./configurations/questions_label_lang_dict.json', 'r', encoding='utf-8') as file:
         questions_label_dict = json.load(file)
 
-    lang = "bn"  
+    lang = "en"  
     mode = "zeroshot"
 
     run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict)
