@@ -71,9 +71,9 @@ def pre_process_data(parsed_llm, mode, lang):
 
 
         # Read the translated answers from a file
-        with open(translation_output_path, 'r', encoding='utf-8') as f:
-            translated_answers = f.readlines()
-
+        """ with open(translation_output_path, 'r', encoding='utf-8') as f:
+            translated_answers = f.readlines() """
+        translated_answers = answers_for_translation
         number_annotations = []
         for i in range(len(translated_answers)):
             t_ans = translated_answers[i].strip().split(" ")

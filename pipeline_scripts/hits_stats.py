@@ -38,9 +38,12 @@ def calc_hits_at_ks(hits_data, k, excel_path, lang, overlap = None):
     Returns:
         dict: A dictionary containing hits at k for the total dataset and subsets.
     """
-    if overlap is not None:
+    if overlap != None:
+        print(f"Calculating hits at k for {lang} with overlap")
         hits_data = {k: v for k, v in hits_data.items() if overlap.get(k) == True}
-        excel_path.replace(f"{lang}", f"{lang}_subset")
+        excel_path = excel_path.replace(f"_{lang}", f"_{lang}_subset")
+        print(lang)
+        print(excel_path)
     # Group hits_data by answerType
     subsets = {}
     for key, question in hits_data.items():

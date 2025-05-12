@@ -36,8 +36,16 @@
         "both": "উভয়"
     },
     "fi": {
-        "true_list": ["Totta", "oikea", "kyllä", "oikealle"],
-        "false_list": ["väärä", "ei"],
+        "true_list": [
+            "Totta",
+            "oikea",
+            "kyllä",
+            "oikealle"
+        ],
+        "false_list": [
+            "väärä",
+            "ei"
+        ],
         "after": "jälkeen",
         "before": "ennen",
         "same": "sama",
@@ -45,7 +53,21 @@
         "both": "molemmat"
     },
     "en": {
-        "true_list": ["True"],
-        "false_list": ["False"]
+        "true_list": [
+            "True",
+            "Correct",
+            "Yes"
+        ],
+        "false_list": [
+            "False",
+            "No",
+            "Incorrect",
+            "Right"
+        ],
+        "after": "after",
+        "before": "before",
+        "same": "same",
+        "less": "less",
+        "both": "both"
     }
 }
