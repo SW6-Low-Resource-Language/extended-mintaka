@@ -1,4 +1,5 @@
 import json
+import os
 
 def get_generation_path(key, mode = None, lang = None):
     """
@@ -19,5 +20,9 @@ def get_generation_path(key, mode = None, lang = None):
         template = template.replace("MODE", mode)
     if lang is not None:
         template = template.replace("LANG", lang)
-
+    # Ensure the directory exists
+    directory = os.path.dirname(template)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory)
+        
     return template

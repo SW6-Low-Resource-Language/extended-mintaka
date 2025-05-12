@@ -97,7 +97,6 @@ output_json_path = output_json_path):
         answers = json.load(file)
     a_len = len(answers)
     for index, answer in enumerate(answers):
-        print(f"Processing {index+1}/{a_len}")
         question, model_answers, id, true_answer = answer['question'], answer['answers'], answer['id'], answer['true_answer']
         supporting_ent = None
         if true_answer is True:
