@@ -77,8 +77,6 @@ def write_hits_to_excel(results, output_path):
 
     # Write total hits at k
     ws_total.append(["k", "Hits", "Tested", "Percentage"])
-    with(open("hitsss.json", "w", encoding="utf-8")) as f:
-        json.dump(results, f, ensure_ascii=False, indent=4)
     for k, data in results["total"].items():
         ws_total.append([k, data["hits_k"], data["hits_tested"], f"{data['hits_percent']:.2%}"])
 

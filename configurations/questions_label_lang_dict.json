@@ -2,11 +2,13 @@
     "question": {
         "da": "Spørgsmål",
         "bn": "প্রশ্ন",
-        "en": "Question"
+        "en": "Question",
+        "fi": "Kysymys"
     },
     "answer": {
         "da": "Svar",
         "bn": "উত্তর",
-        "en": "Answer"
+        "en": "Answer",
+        "fi": "Vastaa"
     }
 }
