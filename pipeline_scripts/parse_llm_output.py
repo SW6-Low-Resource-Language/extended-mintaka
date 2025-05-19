@@ -63,7 +63,7 @@ lang):
         answers = []
         for entry in group:
             entry = entry.replace("Generated text: \"", "Generated text: '")
-            answer_match = re.search(r"Generated text:\s*'(.*?)'", entry, re.DOTALL)
+            answer_match = re.search(r"Generated text: '(.*)", entry)
             answer = answer_match.group(1).strip() if answer_match else "NO_ANSWER_FOUND"
             if "\\n" in answer:
                 print(f"Answer contains \\n: {answer}")

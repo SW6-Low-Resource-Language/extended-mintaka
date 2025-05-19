@@ -66,8 +66,8 @@ def pre_process_data(parsed_llm, mode, lang):
 
 
         translation_output_path = get_generation_path("processesing_numerical_translations", mode, lang)
-        """ # Uncomment this to actually use the translation service
-        translated_answers = google_translate_line_by_line(answers_for_translation, "translated_num_answers_da.txt", target_language="en-US", source_language=lang) """
+        # Uncomment this to actually use the translation service
+        # translated_answers = google_translate_line_by_line(answers_for_translation, "translated_num_answers_da.txt", target_language="en-US", source_language=lang)
 
 
         # Read the translated answers from a file
