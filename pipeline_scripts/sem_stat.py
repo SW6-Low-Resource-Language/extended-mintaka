@@ -41,7 +41,9 @@ def init_id_variables_map(mintaka_data):
             complexity = entry["complexityType"]
             category = entry["category"]
             answerType = entry["answer"]["answerType"]
-            got_supporting_ents = "answer" in entry and "supportingEnt" in entry["answer"]
+            got_supporting_ents = "Non-numerical"
+            if answerType == "numerical":
+                got_supporting_ents = "Got_supporting_entities" if "answer" in entry and "supportingEnt" in entry["answer"] else "No_supporting_entities"
             id_variables_map[id] = {
                 "complexity": complexity,
                 "category": category,
@@ -136,9 +138,12 @@ def run_semantic_similarity_analysis(lang, test_type, overlap = None):
             ws.append(["Key", "Value", "Mean", "Variance"])
 
             # Process sem_scores_obj
+            total_mean = 0 
+            total_variance = 0
+            scores = []
             for key, value_dict in sem_scores_obj.items():
                 for value, sem_scores_list in value_dict.items():
-
+                    
                     # Flatten the sem_scores list
                     flattened_scores = flatten(sem_scores_list)
                     # Compute mean and variance
@@ -146,7 +151,13 @@ def run_semantic_similarity_analysis(lang, test_type, overlap = None):
                     variance = calculate_variance(flattened_scores)
                     # Write to Excel
                     ws.append([key, value, mean, variance])
-
+                    if total_mean == 0:
+                        for score in flattened_scores:
+                            scores.append(score)
+                if total_mean == 0:
+                    total_mean = calculate_mean(scores)
+                    total_variance = calculate_variance(scores)
+            ws.append(["Overall", "ALL", total_mean, total_variance])
         
 
         def write_performers_to_sheet(wb, sheet_title, performers):
@@ -235,7 +246,7 @@ def run_semantic_similarity_analysis(lang, test_type, overlap = None):
             # Define a set of distinct colors for better contrast
             distinct_colors = [
                 "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
-                "#ffff00", "#e377c2", "#66ffff"
+                "#ffff00", "#e377c2", "#66ffff", "#8c564b"
             ]
 
             labels = list(grouped_scores.keys())
@@ -320,7 +331,7 @@ def run_semantic_similarity_analysis(lang, test_type, overlap = None):
                         "showactive": True,
                     }
                 ],
-                title="Distribution of Sem Scores by Category (Interactive)",
+                title=title + " (Interactive)",
                 xaxis_title="Sem Score (rounded to 2 decimals)",
                 yaxis_title="Frequency",
             )
@@ -349,9 +360,6 @@ def run_semantic_similarity_analysis(lang, test_type, overlap = None):
     # running the different parts of the analysis
     sem_scores_obj, best_performers, worst_performers, hits_sem_scores = calculate_data()
     print("Calculating data...")
-    print(list(sem_scores_obj.keys())[0])
-
-    print(list(hits_sem_scores.keys())[0])
     create_semscore_analysis_workbook(sem_scores_obj, best_performers, worst_performers, hits_sem_scores)
     create_plots() # Creates stacked bar charts and interactive plots for the sem scores
 
