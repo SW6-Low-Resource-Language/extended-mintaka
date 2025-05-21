@@ -58,7 +58,6 @@ def get_intersecting_entries(mintaka_data, languages = ["da", "bn"]):
         elif entry['answer']['answer'] == None:
             overlapping_dict[id] = False
         else: 
-            print(f"Processing {id}")
             # Check if the answer is a list of entities
             label_dict = entry['answer']['answer'][0]['label']
             for lang in languages:

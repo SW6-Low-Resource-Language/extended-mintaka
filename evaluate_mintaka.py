@@ -62,14 +62,14 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
 
     #Step 3 : Calculate semantic similarity scores
     sem_score_output_path = get_generation_path("sem_scores_json", mode, lang)
-    perform_semantic_similarity(
+    """ perform_semantic_similarity(
         lang=lang, 
         dataset_input_json_path=dataset_input_json_path, 
         model_answer_json_path=parsed_answer_path, 
         true_label=max_hit_true_label, 
         false_label=max_hit_false_label,
         output_json_path=sem_score_output_path
-    )  
+    )  """ 
     #dont pass sub_entries to run_semantic_similarity_analysis if you want to calculate for all entries in the language
     run_semantic_similarity_analysis(lang, mode) 
     run_semantic_similarity_analysis(lang, mode, sub_entries)
