@@ -51,8 +51,8 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
     # Subsets hits_obj
     sub_entries = get_intersecting_entries(dataset_input_json, ["da", "bn", "fi"])
     # dont pass sub_entries to calc_hits_at_ks if you want to calculate for all entries in the language
-    calc_hits_at_ks(hits_obj,5, hits_excel_path, lang) 
-    calc_hits_at_ks(hits_obj,5, hits_excel_path, lang, sub_entries)
+    calc_hits_at_ks(hits_obj,5, hits_excel_path, lang, dataset_input_json)
+    calc_hits_at_ks(hits_obj,5, hits_excel_path, lang, dataset_input_json, sub_entries)
 
     true_hits = bool_hits["True"]  
     false_hits = bool_hits["False"]
@@ -60,7 +60,7 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
     max_hit_true_label = max(true_hits, key=true_hits.get)
     max_hit_false_label = max(false_hits, key=false_hits.get) 
 
-    #Step 3 : Calculate semantic similarity scores
+    """ #Step 3 : Calculate semantic similarity scores
     sem_score_output_path = get_generation_path("sem_scores_json", mode, lang)
     """ perform_semantic_similarity(
         lang=lang, 
@@ -72,7 +72,7 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
     )  """ 
     #dont pass sub_entries to run_semantic_similarity_analysis if you want to calculate for all entries in the language
     run_semantic_similarity_analysis(lang, mode) 
-    run_semantic_similarity_analysis(lang, mode, sub_entries)
+    run_semantic_similarity_analysis(lang, mode, sub_entries) """
     
     
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     with open('./configurations/questions_label_lang_dict.json', 'r', encoding='utf-8') as file:
         questions_label_dict = json.load(file)
 
-    lang = "en"  
+    lang = "bn"  
     mode = "zeroshot"
 
     run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict)

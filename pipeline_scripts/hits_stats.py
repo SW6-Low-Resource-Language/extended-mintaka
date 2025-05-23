@@ -24,7 +24,7 @@ def hits_at_k(hits_data, k):
     hits_percent = hits_k / hits_tested
     return {"hits_k": hits_k, "hits_tested": hits_tested, "hits_percent": hits_percent}
 
-def calc_hits_at_ks(hits_data, k, excel_path, lang, overlap = None):
+def calc_hits_at_ks(hits_data, k, excel_path, lang, dataset_json, overlap = None):
     """
     Calculate hits at k for the entire dataset and subsets grouped by answerType.
 
@@ -45,12 +45,25 @@ def calc_hits_at_ks(hits_data, k, excel_path, lang, overlap = None):
         print(lang)
         print(excel_path)
     # Group hits_data by answerType
+    id_complexity_dict = {}
+    for entry in dataset_json:
+        id = entry["id"]
+        complexity = entry["complexityType"]
+        if id not in id_complexity_dict:
+            id_complexity_dict[id] = complexity
+        
+
+
     subsets = {}
     for key, question in hits_data.items():
         answer_type = question['answerType']
+        complexity = id_complexity_dict[key]
         if answer_type not in subsets:
             subsets[answer_type] = {}
+        if complexity not in subsets:
+            subsets[complexity] = {}
         subsets[answer_type][key] = question
+        subsets[complexity][key] = question
     
     # Calculate hits at k for total and subsets
     results = {"total": {}, "subsets": {}}
