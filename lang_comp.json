@@ -1,0 +1,107 @@
+{
+    "greater": {
+        "bn": {
+            "count": 172,
+            "multihop": 59,
+            "comparative": 110,
+            "difference": 67,
+            "intersection": 65,
+            "ordinal": 62,
+            "superlative": 72,
+            "yesno": 200,
+            "generic": 127
+        },
+        "da": {
+            "intersection": 195,
+            "count": 263,
+            "yesno": 219,
+            "comparative": 171,
+            "multihop": 199,
+            "difference": 180,
+            "ordinal": 191,
+            "superlative": 179,
+            "generic": 326
+        },
+        "fi": {
+            "intersection": 182,
+            "count": 252,
+            "multihop": 166,
+            "comparative": 118,
+            "difference": 149,
+            "ordinal": 207,
+            "superlative": 181,
+            "yesno": 158,
+            "generic": 294
+        }
+    },
+    "less": {
+        "bn": {
+            "intersection": 95,
+            "count": 106,
+            "comparative": 158,
+            "yesno": 123,
+            "ordinal": 83,
+            "difference": 75,
+            "multihop": 65,
+            "superlative": 79,
+            "generic": 226
+        },
+        "da": {
+            "comparative": 75,
+            "count": 54,
+            "difference": 38,
+            "intersection": 54,
+            "multihop": 27,
+            "ordinal": 45,
+            "superlative": 38,
+            "yesno": 97,
+            "generic": 124
+        },
+        "fi": {
+            "yesno": 172,
+            "comparative": 170,
+            "ordinal": 46,
+            "count": 48,
+            "difference": 68,
+            "intersection": 78,
+            "multihop": 42,
+            "superlative": 66,
+            "generic": 152
+        }
+    },
+    "same": {
+        "bn": {
+            "generic": 189,
+            "comparative": 78,
+            "count": 122,
+            "difference": 83,
+            "intersection": 87,
+            "multihop": 175,
+            "ordinal": 96,
+            "superlative": 100,
+            "yesno": 77
+        },
+        "da": {
+            "comparative": 141,
+            "generic": 241,
+            "ordinal": 103,
+            "count": 83,
+            "difference": 110,
+            "intersection": 108,
+            "multihop": 131,
+            "superlative": 136,
+            "yesno": 84
+        },
+        "fi": {
+            "comparative": 106,
+            "generic": 268,
+            "count": 100,
+            "difference": 129,
+            "intersection": 116,
+            "multihop": 156,
+            "ordinal": 110,
+            "superlative": 108,
+            "yesno": 70
+        }
+    }
+}

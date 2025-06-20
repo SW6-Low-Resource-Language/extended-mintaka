@@ -40,7 +40,7 @@ import json
 
 
 
-def get_intersecting_entries(mintaka_data, languages = ["da", "bn"]): 
+def get_intersecting_entries(mintaka_data, languages = ["da", "bn", "fi"]): 
     """
     Get the intersecting entries for the specified languages from the mintaka data.
     Args:
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         mintaka_data = json.load(file)
 
     # Get the intersecting entries for the specified languages
-    intersecting_entries = get_intersecting_enries(mintaka_data, languages=["da", "bn"])
+    intersecting_entries = get_intersecting_entries(mintaka_data, languages=["da", "bn"])
     with open("intersecting_entries.json", 'w', encoding='utf-8') as file:
         json.dump(intersecting_entries, file, ensure_ascii=False, indent=4)
     print(intersecting_entries)
