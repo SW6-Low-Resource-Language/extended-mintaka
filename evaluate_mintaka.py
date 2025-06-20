@@ -14,9 +14,9 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
 
     Args:
         lang (str): The language code (e.g., 'bn' for Bengali).
-        dataset_input_json_path (str): Path to the input JSON file containing the dataset.
-        model_input_txt_path (str): Path to the input text file containing LLM prompts and generated answers.
-        output_json_path (str): Path to save the output JSON file with parsed questions, answers, IDs, and true answers.
+        mode (str): The mode of evaluation (zeroshot, finetuned etc).
+        comparative_dict (dict): A dictionary containing comparative data for english terms to translated terms in the givne languages
+        questions_label_dict (dict): A dictionary translating question and answer to the corresponding used formulations in the LLM output for parsing. 
 
     Returns:
         None
@@ -42,7 +42,8 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
     with open(processed_data_path, 'w', encoding='utf-8') as file:
         json.dump(processed_answers, file, ensure_ascii=False, indent=4)
     with open(processed_data_path, 'r', encoding='utf-8') as file:
-        processed_answers = json.load(file) 
+        processed_answers = json.load(file)
+
 
 
     hits_output_path = get_generation_path("hit_annotation_json", mode, lang)
@@ -62,14 +63,14 @@ def run_mintaka_analysis(lang, mode, comparative_dict, questions_label_dict):
 
     #Step 3 : Calculate semantic similarity scores
     sem_score_output_path = get_generation_path("sem_scores_json", mode, lang)
-    """ perform_semantic_similarity(
+    perform_semantic_similarity(
         lang=lang, 
         dataset_input_json_path=dataset_input_json_path, 
         model_answer_json_path=parsed_answer_path, 
         true_label=max_hit_true_label, 
         false_label=max_hit_false_label,
         output_json_path=sem_score_output_path
-    ) """
+    )
     #dont pass sub_entries to run_semantic_similarity_analysis if you want to calculate for all entries in the language
     run_semantic_similarity_analysis(lang, mode) 
     run_semantic_similarity_analysis(lang, mode, sub_entries)
