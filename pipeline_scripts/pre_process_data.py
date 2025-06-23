@@ -67,13 +67,14 @@ def pre_process_data(parsed_llm, mode, lang):
 
         translation_output_path = get_generation_path("processesing_numerical_translations", mode, lang)
         # Uncomment this to actually use the translation service
-        # translated_answers = google_translate_line_by_line(answers_for_translation, "translated_num_answers_da.txt", target_language="en-US", source_language=lang)
+        translated_answers = google_translate_line_by_line(answers_for_translation, "translated_num_answers_da.txt", target_language="en-US", source_language=lang)
 
 
         # Read the translated answers from a file
         """ with open(translation_output_path, 'r', encoding='utf-8') as f:
             translated_answers = f.readlines() """
-        translated_answers = answers_for_translation
+        # If you want to refrain from translating the answers you can uncomment the line below and comment the line that uses the translation function. 
+        # translated_answers = answers_for_translation 
         number_annotations = []
         for i in range(len(translated_answers)):
             t_ans = translated_answers[i].strip().split(" ")
